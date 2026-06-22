@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&family=Noto+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#0f1115; }
+</style>
+</helmet>
+
+<div style="box-sizing:border-box; min-height:100vh; padding:32px; background:radial-gradient(circle at top left, rgba(57,138,255,0.14), transparent 28%), radial-gradient(circle at top right, rgba(255,255,255,0.06), transparent 20%), #0f1115; font-family:'Inter',system-ui,sans-serif; color:#eef2f7;">
+  <div style="max-width:1360px; margin:0 auto; display:flex; flex-direction:column; gap:24px;">
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.54);">Lifecycle Explorer</div>
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+        <span style="display:flex; flex-direction:column; gap:8px;">
+          <span style="font-size:40px; line-height:1; font-weight:700; letter-spacing:-0.04em;">Full app flow in one place</span>
+          <span style="max-width:760px; font-size:15px; line-height:1.5; color:rgba(255,255,255,0.68);">Cycle through each supported desktop OS, flip light and dark mode, and step through the major screens and runtime states without leaving a single preview file.</span>
+        </span>
+        <div style="display:flex; gap:10px;">
+          <button onClick="{{ onPrevScene }}" style="height:34px; padding:0 14px; border:1px solid rgba(255,255,255,0.14); border-radius:10px; background:rgba(255,255,255,0.06); color:#eef2f7; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;">Previous</button>
+          <button onClick="{{ onNextScene }}" style="height:34px; padding:0 14px; border:none; border-radius:10px; background:#4c8dff; color:#fff; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700;">Next scene</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start;">
+      <div style="display:flex; flex-direction:column; gap:18px; padding:18px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); box-shadow:0 18px 40px rgba(0,0,0,0.24);">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.52);">Operating system</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <sc-for list="{{ platformOptions }}" as="opt" hint-placeholder-count="4">
+              <button onClick="{{ opt.onPick }}" style="height:34px; padding:0 12px; border:none; border-radius:10px; background:{{ opt.bg }}; color:{{ opt.color }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700;">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.52);">Appearance</div>
+          <div style="display:flex; gap:8px;">
+            <sc-for list="{{ themeOptions }}" as="opt" hint-placeholder-count="2">
+              <button onClick="{{ opt.onPick }}" style="flex:1; height:34px; border:none; border-radius:10px; background:{{ opt.bg }}; color:{{ opt.color }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700;">{{ opt.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.52);">Lifecycle scenes</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ sceneOptions }}" as="scene" hint-placeholder-count="8">
+              <button onClick="{{ scene.onPick }}" style="display:flex; flex-direction:column; gap:3px; padding:11px 12px; border:none; border-radius:12px; background:{{ scene.bg }}; color:{{ scene.color }}; cursor:pointer; text-align:left; font-family:inherit;">
+                <span style="font-size:13px; font-weight:700;">{{ scene.label }}</span>
+                <span style="font-size:11.5px; line-height:1.35; color:{{ scene.subColor }};">{{ scene.note }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06);">
+          <div style="font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.52);">Current preview</div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size:24px; line-height:1.1; font-weight:700; letter-spacing:-0.03em;">{{ activeSceneLabel }}</span>
+            <span style="font-size:13px; line-height:1.45; color:rgba(255,255,255,0.66);">{{ activeSceneNote }}</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:2px;">
+            <div style="padding:9px 10px; border-radius:10px; background:rgba(255,255,255,0.05);">
+              <div style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.46); margin-bottom:3px;">Platform</div>
+              <div style="font-size:13px; font-weight:600;">{{ activePlatformLabel }}</div>
+            </div>
+            <div style="padding:9px 10px; border-radius:10px; background:rgba(255,255,255,0.05);">
+              <div style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.46); margin-bottom:3px;">Theme</div>
+              <div style="font-size:13px; font-weight:600;">{{ activeThemeLabel }}</div>
+            </div>
+            <div style="padding:9px 10px; border-radius:10px; background:rgba(255,255,255,0.05);">
+              <div style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.46); margin-bottom:3px;">Screen</div>
+              <div style="font-size:13px; font-weight:600;">{{ activeScreenLabel }}</div>
+            </div>
+            <div style="padding:9px 10px; border-radius:10px; background:rgba(255,255,255,0.05);">
+              <div style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.46); margin-bottom:3px;">Mode</div>
+              <div style="font-size:13px; font-weight:600;">{{ activeModeLabel }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 18px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);">
+          <span style="display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size:14px; font-weight:700;">{{ activePlatformLabel }} · {{ activeThemeLabel }}</span>
+            <span style="font-size:12.5px; color:rgba(255,255,255,0.62);">{{ activePlatformMeta }}</span>
+          </span>
+          <span style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+            <span style="height:28px; display:flex; align-items:center; padding:0 10px; border-radius:999px; background:rgba(255,255,255,0.07); font-size:12px; font-weight:700; color:rgba(255,255,255,0.72);">{{ activeScreenLabel }}</span>
+            <span style="height:28px; display:flex; align-items:center; padding:0 10px; border-radius:999px; background:{{ runningPillBg }}; font-size:12px; font-weight:700; color:{{ runningPillColor }};">{{ runningPillLabel }}</span>
+          </span>
+        </div>
+
+        <div style="position:relative; height:820px; border-radius:22px; overflow:hidden; box-shadow:0 28px 80px rgba(0,0,0,0.34);">
+          <sc-if value="{{ isMac }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; inset:0; background:linear-gradient(160deg,#e9b7d4,#a98fe0 45%,#6d8fe8);">
+              <div style="position:absolute; top:0; left:0; right:0; height:28px; display:flex; align-items:center; padding:0 12px; box-sizing:border-box; background:{{ shellTopBg }}; backdrop-filter:blur(24px) saturate(160%); -webkit-backdrop-filter:blur(24px) saturate(160%); border-bottom:1px solid {{ shellTopBorder }}; font-size:13px; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,sans-serif; color:{{ shellTopColor }};">
+                <span style="display:flex; align-items:center; justify-content:center; width:18px; margin-right:13px;"></span>
+                <span style="font-weight:700; margin-right:16px;">Time &amp; Flow</span>
+                <span style="color:{{ shellTopSub }}; margin-right:14px;">File</span>
+                <span style="color:{{ shellTopSub }}; margin-right:14px;">Edit</span>
+                <span style="color:{{ shellTopSub }}; margin-right:14px;">View</span>
+                <span style="color:{{ shellTopSub }};">Help</span>
+                <span style="flex:1;"></span>
+                <span style="display:flex; align-items:center; gap:5px; height:22px; padding:0 8px; margin-right:10px; border-radius:6px; background:{{ trayBadgeBg }};">
+                  <span id="life-preview-rec" style="width:6px; height:6px; border-radius:50%; background:{{ trayRecColor }}; opacity:0; transition:opacity .25s;"></span>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ trayAccent }}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+                  <span id="life-preview-time" style="font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:{{ trayAccent }};"></span>
+                </span>
+                <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ shellTopColor }}" stroke-width="2" stroke-linecap="round" style="margin-right:14px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><path d="M12 20h.01"></path></svg>
+                <svg width="25" height="14" viewBox="0 0 30 14" style="margin-right:14px;"><rect x="1" y="2.5" width="24" height="9" rx="2.5" fill="none" stroke="{{ shellTopColor }}" stroke-width="1.4"></rect><rect x="3" y="4.5" width="{{ macBatteryWidth }}" height="5" rx="1" fill="{{ shellTopColor }}"></rect><rect x="26" y="5" width="2" height="4" rx="1" fill="{{ shellTopColor }}"></rect></svg>
+                <span style="font-weight:500;">Tue 10:42</span>
+              </div>
+              <div style="position:absolute; top:32px; right:78px; width:14px; height:14px; transform:rotate(45deg); background:{{ popArrowBg }}; box-shadow:{{ popArrowShadow }};"></div>
+              <sc-if value="{{ showLightHomeIdle }}" hint-placeholder-val="{{ true }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="macos" theme="light" screen="home" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="macos" theme="light" screen="home" mode="track" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="macos" theme="light" screen="home" mode="focus" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="light" screen="start" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="light" screen="start" mode="focus" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="light" screen="settings" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="light" screen="newEntry" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="light" screen="newProject" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeIdle }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="macos" theme="dark" screen="home" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="macos" theme="dark" screen="home" mode="track" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="macos" theme="dark" screen="home" mode="focus" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="dark" screen="start" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="dark" screen="start" mode="focus" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="dark" screen="settings" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="dark" screen="newEntry" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="macos" theme="dark" screen="newProject" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isWindows }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; inset:0; background:{{ windowsBackdrop }};">
+              <sc-if value="{{ showLightHomeIdle }}" hint-placeholder-val="{{ true }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="windows" theme="light" screen="home" mode="track" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="windows" theme="light" screen="home" mode="track" running="true" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="windows" theme="light" screen="home" mode="focus" running="true" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="light" screen="start" mode="track" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="light" screen="start" mode="focus" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="light" screen="settings" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="light" screen="newEntry" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="light" screen="newProject" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeIdle }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="windows" theme="dark" screen="home" mode="track" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="windows" theme="dark" screen="home" mode="track" running="true" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="windows" theme="dark" screen="home" mode="focus" running="true" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="dark" screen="start" mode="track" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="dark" screen="start" mode="focus" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="dark" screen="settings" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="dark" screen="newEntry" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="windows" theme="dark" screen="newProject" hint-size="470px,640px" style="position:absolute; bottom:62px; right:22px;"></dc-import></sc-if>
+              <div style="position:absolute; bottom:0; left:0; right:0; height:48px; display:flex; align-items:center; padding:0 14px; background:{{ windowsTaskbarBg }}; backdrop-filter:blur(30px) saturate(150%); -webkit-backdrop-filter:blur(30px) saturate(150%); border-top:1px solid {{ windowsTaskbarBorder }};">
+                <div style="flex:1; display:flex; justify-content:center;">
+                  <div style="display:flex; align-items:center; gap:8px; padding:0 12px; height:38px; border-radius:19px; background:{{ windowsCenterBg }}; border:1px solid {{ windowsCenterBorder }};">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1" fill="{{ windowsBrand }}"></rect><rect x="13" y="3" width="8" height="8" rx="1" fill="{{ windowsBrand }}"></rect><rect x="3" y="13" width="8" height="8" rx="1" fill="{{ windowsBrand }}"></rect><rect x="13" y="13" width="8" height="8" rx="1" fill="{{ windowsBrand }}"></rect></svg>
+                    <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px;">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ windowsSubIcon }}" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                    </div>
+                    <div style="position:relative; display:flex; align-items:center; justify-content:center; width:36px; height:34px; border-radius:8px; background:{{ windowsActiveBg }};">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ windowsBrand }}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+                      <span style="position:absolute; bottom:3px; left:50%; transform:translateX(-50%); width:14px; height:3px; border-radius:2px; background:{{ windowsBrand }};"></span>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px;">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ windowsSubIcon }}" stroke-width="2"><rect x="4" y="4" width="7" height="7" rx="1"></rect><rect x="13" y="4" width="7" height="7" rx="1"></rect><rect x="4" y="13" width="7" height="7" rx="1"></rect><rect x="13" y="13" width="7" height="7" rx="1"></rect></svg>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:13px; padding-right:2px; margin-left:auto;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="{{ windowsIcon }}" stroke-width="2.4"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ windowsIcon }}" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><path d="M12 20h.01"></path></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="{{ windowsIcon }}"><path d="M11 5 6 9H2v6h4l5 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="{{ windowsIcon }}" stroke-width="1.6"></path></svg>
+                  <div style="display:flex; align-items:center; gap:5px; padding:0 8px; height:24px; border-radius:6px; background:{{ windowsBadgeBg }};">
+                    <span id="life-preview-rec" style="width:6px; height:6px; border-radius:50%; background:{{ trayRecColor }}; opacity:0; transition:opacity .25s;"></span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ windowsBrand }}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+                    <span id="life-preview-time" style="font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:{{ windowsBrand }};"></span>
+                  </div>
+                  <svg width="24" height="14" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="{{ windowsIcon }}" stroke-width="1.4"></rect><rect x="3" y="4.5" width="{{ windowsBatteryWidth }}" height="5" rx="1" fill="{{ windowsIcon }}"></rect><rect x="26" y="5" width="2" height="4" rx="1" fill="{{ windowsIcon }}"></rect></svg>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; font-size:11px; color:{{ windowsIcon }}; line-height:1.25;"><span>10:42 AM</span><span>6/21/2026</span></div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isGnome }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; inset:0; background:{{ gnomeBackdrop }};">
+              <div style="position:absolute; top:0; left:0; right:0; height:28px; display:flex; align-items:center; padding:0 14px; background:#1f1f1f; color:rgba(255,255,255,0.92); font-size:13px; font-family:'Cantarell','Noto Sans',system-ui,sans-serif; font-weight:600;">
+                <span>Activities</span>
+                <span style="flex:1;"></span>
+                <span style="font-weight:700;">Tue 10:42</span>
+                <span style="flex:1;"></span>
+                <div style="display:flex; align-items:center; gap:8px; margin-left:12px; padding:0 10px; height:22px; border-radius:11px; background:{{ gnomeIndicatorBg }};">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ gnomeIndicatorStroke }}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+                  <span id="life-preview-rec" style="width:6px; height:6px; border-radius:50%; background:{{ trayRecColor }}; opacity:0; transition:opacity .25s;"></span>
+                  <span id="life-preview-time" style="font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; color:{{ gnomeIndicatorStroke }};"></span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M12 20h.01"></path></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 5 6 9H2v6h4l5 4z"></path></svg>
+                  <svg width="20" height="12" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#fff" stroke-width="1.4"></rect><rect x="3" y="4.5" width="{{ gnomeBatteryWidth }}" height="5" rx="1" fill="#fff"></rect><rect x="26" y="5" width="2" height="4" rx="1" fill="#fff"></rect></svg>
+                </div>
+              </div>
+              <div style="position:absolute; top:33px; right:124px; width:13px; height:13px; background:{{ gnomeArrowBg }}; transform:rotate(45deg); box-shadow:{{ gnomeArrowShadow }};"></div>
+              <sc-if value="{{ showLightHomeIdle }}" hint-placeholder-val="{{ true }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="gnome" theme="light" screen="home" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="gnome" theme="light" screen="home" mode="track" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="gnome" theme="light" screen="home" mode="focus" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="start" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="start" mode="focus" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="settings" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="newEntry" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="newProject" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeIdle }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="gnome" theme="dark" screen="home" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="gnome" theme="dark" screen="home" mode="track" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="gnome" theme="dark" screen="home" mode="focus" running="true" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="dark" screen="start" mode="track" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="dark" screen="start" mode="focus" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="dark" screen="settings" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="dark" screen="newEntry" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="gnome" theme="dark" screen="newProject" hint-size="470px,640px" style="position:absolute; top:40px; right:32px;"></dc-import></sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isKde }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute; inset:0; background:{{ kdeBackdrop }};">
+              <sc-if value="{{ showLightHomeIdle }}" hint-placeholder-val="{{ true }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="kde" theme="light" screen="home" mode="track" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="kde" theme="light" screen="home" mode="track" running="true" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="kde" theme="light" screen="home" mode="focus" running="true" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="light" screen="start" mode="track" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="light" screen="start" mode="focus" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="light" screen="settings" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="light" screen="newEntry" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showLightNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="light" screen="newProject" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeIdle }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="kde" theme="dark" screen="home" mode="track" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeTracking }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="kde" theme="dark" screen="home" mode="track" running="true" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkHomeFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" tray-id="life-preview" platform="kde" theme="dark" screen="home" mode="focus" running="true" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartTrack }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="dark" screen="start" mode="track" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkStartFocus }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="dark" screen="start" mode="focus" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkSettings }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="dark" screen="settings" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewEntry }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="dark" screen="newEntry" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <sc-if value="{{ showDarkNewProject }}" hint-placeholder-val="{{ false }}"><dc-import name="Popover" frame="none" platform="kde" theme="dark" screen="newProject" hint-size="450px,626px" style="position:absolute; bottom:58px; right:22px;"></dc-import></sc-if>
+              <div style="position:absolute; bottom:0; left:0; right:0; height:44px; display:flex; align-items:center; padding:0 8px; background:{{ kdePanelBg }}; border-top:1px solid {{ kdePanelBorder }}; font-family:'Noto Sans',system-ui,sans-serif;">
+                <div style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:4px; background:#3daee9; margin-right:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2 3 7v10l9 5 9-5V7z" opacity="0.9"></path><circle cx="12" cy="12" r="3" fill="#3daee9"></circle></svg></div>
+                <div style="display:flex; align-items:center; gap:6px; padding:0 10px; height:32px; border-radius:4px; background:{{ kdeBadgeBg }}; border:1px solid {{ kdeBadgeBorder }};">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ kdeBadgeAccent }}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+                  <span id="life-preview-rec" style="width:6px; height:6px; border-radius:50%; background:{{ trayRecColor }}; opacity:0; transition:opacity .25s;"></span>
+                  <span id="life-preview-time" style="font-size:11.5px; font-weight:600; font-variant-numeric:tabular-nums; color:{{ kdeText }};"></span>
+                </div>
+                <span style="flex:1;"></span>
+                <div style="display:flex; align-items:center; gap:10px; padding-right:6px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ kdeIcon }}" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M12 20h.01"></path></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="{{ kdeIcon }}"><path d="M11 5 6 9H2v6h4l5 4z"></path></svg>
+                  <svg width="22" height="13" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="{{ kdeIcon }}" stroke-width="1.4"></rect><rect x="3" y="4.5" width="{{ kdeBatteryWidth }}" height="5" rx="1" fill="{{ kdeIcon }}"></rect><rect x="26" y="5" width="2" height="4" rx="1" fill="{{ kdeIcon }}"></rect></svg>
+                  <div style="width:1px; height:18px; background:{{ kdeDivider }};"></div>
+                  <div style="display:flex; flex-direction:column; align-items:flex-end; font-size:11px; color:{{ kdeText }}; line-height:1.2;"><span style="font-weight:600;">10:42</span><span style="font-size:9.5px; color:{{ kdeSubText }};">Tue Jun 21</span></div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1180}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = {
+      platform:'macos',
+      theme:'light',
+      sceneIndex:0
+    };
+  }
+
+  scenes(){
+    return [
+      { id:'homeIdle', label:'Home idle', note:'Default dashboard with recent entries and a ready state.', screen:'home', mode:'track', running:false },
+      { id:'homeTracking', label:'Home tracking', note:'Active time tracking session on the dashboard.', screen:'home', mode:'track', running:true },
+      { id:'homeFocus', label:'Home focus', note:'Pomodoro session in progress with countdown state.', screen:'home', mode:'focus', running:true },
+      { id:'startTrack', label:'Start timer', note:'Choose a project and task before starting a tracked session.', screen:'start', mode:'track', running:false },
+      { id:'startFocus', label:'Start focus', note:'Focus-mode setup with Pomodoro controls exposed.', screen:'start', mode:'focus', running:false },
+      { id:'settings', label:'Settings', note:'Preferences and defaults for the selected desktop environment.', screen:'settings', mode:'track', running:false },
+      { id:'newEntry', label:'Manual entry', note:'Backfill time with duration and notes.', screen:'newEntry', mode:'track', running:false },
+      { id:'newProject', label:'New project', note:'Create a project with metadata and color tagging.', screen:'newProject', mode:'track', running:false }
+    ];
+  }
+
+  renderVals(){
+    const s = this.state;
+    const scenes = this.scenes();
+    const scene = scenes[s.sceneIndex] || scenes[0];
+    const platforms = [
+      { id:'macos', label:'macOS', meta:'Menu Bar Extra, popover stack, glass materials.' },
+      { id:'windows', label:'Windows 11', meta:'System tray flyout, Fluent surfaces, Segoe rhythm.' },
+      { id:'gnome', label:'GNOME', meta:'Top-bar indicator, libadwaita compact popover.' },
+      { id:'kde', label:'KDE Plasma', meta:'Tray applet, Breeze popup, compact panel alignment.' }
+    ];
+    const themes = [
+      { id:'light', label:'Light' },
+      { id:'dark', label:'Dark' }
+    ];
+    const activePlatform = platforms.find(p=>p.id===s.platform) || platforms[0];
+    const dark = s.theme === 'dark';
+
+    const platformOptions = platforms.map(p=>({
+      label:p.label,
+      bg:s.platform===p.id ? '#4c8dff' : 'rgba(255,255,255,0.07)',
+      color:s.platform===p.id ? '#ffffff' : 'rgba(255,255,255,0.82)',
+      onPick:()=>this.setState({ platform:p.id })
+    }));
+    const themeOptions = themes.map(t=>({
+      label:t.label,
+      bg:s.theme===t.id ? '#4c8dff' : 'rgba(255,255,255,0.07)',
+      color:s.theme===t.id ? '#ffffff' : 'rgba(255,255,255,0.82)',
+      onPick:()=>this.setState({ theme:t.id })
+    }));
+    const sceneOptions = scenes.map((item, index)=>({
+      label:item.label,
+      note:item.note,
+      bg:s.sceneIndex===index ? 'rgba(76,141,255,0.18)' : 'rgba(255,255,255,0.06)',
+      color:'#eef2f7',
+      subColor:s.sceneIndex===index ? 'rgba(220,232,255,0.86)' : 'rgba(255,255,255,0.56)',
+      onPick:()=>this.setState({ sceneIndex:index })
+    }));
+    const light = !dark;
+    const sceneFlags = {
+      showLightHomeIdle: light && scene.id === 'homeIdle',
+      showLightHomeTracking: light && scene.id === 'homeTracking',
+      showLightHomeFocus: light && scene.id === 'homeFocus',
+      showLightStartTrack: light && scene.id === 'startTrack',
+      showLightStartFocus: light && scene.id === 'startFocus',
+      showLightSettings: light && scene.id === 'settings',
+      showLightNewEntry: light && scene.id === 'newEntry',
+      showLightNewProject: light && scene.id === 'newProject',
+      showDarkHomeIdle: dark && scene.id === 'homeIdle',
+      showDarkHomeTracking: dark && scene.id === 'homeTracking',
+      showDarkHomeFocus: dark && scene.id === 'homeFocus',
+      showDarkStartTrack: dark && scene.id === 'startTrack',
+      showDarkStartFocus: dark && scene.id === 'startFocus',
+      showDarkSettings: dark && scene.id === 'settings',
+      showDarkNewEntry: dark && scene.id === 'newEntry',
+      showDarkNewProject: dark && scene.id === 'newProject'
+    };
+
+    return {
+      ...sceneFlags,
+      platformOptions,
+      themeOptions,
+      sceneOptions,
+      activeSceneLabel: scene.label,
+      activeSceneNote: scene.note,
+      activePlatformLabel: activePlatform.label,
+      activePlatformMeta: activePlatform.meta,
+      activeTheme: s.theme,
+      activeThemeLabel: dark ? 'Dark' : 'Light',
+      activeScreenLabel: scene.screen === 'newEntry' ? 'New Entry' : (scene.screen === 'newProject' ? 'New Project' : (scene.screen === 'start' ? 'Start' : scene.screen.charAt(0).toUpperCase()+scene.screen.slice(1))),
+      activeModeLabel: scene.mode === 'focus' ? 'Focus' : 'Track',
+      activeScreen: scene.screen,
+      activeMode: scene.mode,
+      activeRunning: scene.running,
+      runningPillLabel: scene.running ? 'Running' : 'Static preview',
+      runningPillBg: scene.running ? 'rgba(62,209,122,0.16)' : 'rgba(255,255,255,0.08)',
+      runningPillColor: scene.running ? '#7ef0a5' : 'rgba(255,255,255,0.76)',
+      onPrevScene:()=>this.setState(st=>({ sceneIndex:(st.sceneIndex + scenes.length - 1) % scenes.length })),
+      onNextScene:()=>this.setState(st=>({ sceneIndex:(st.sceneIndex + 1) % scenes.length })),
+      isMac:s.platform==='macos',
+      isWindows:s.platform==='windows',
+      isGnome:s.platform==='gnome',
+      isKde:s.platform==='kde',
+
+      shellTopBg: dark ? 'rgba(0,0,0,0.32)' : 'rgba(246,248,252,0.92)',
+      shellTopBorder: dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+      shellTopColor: dark ? 'rgba(255,255,255,0.92)' : '#1d1d1f',
+      shellTopSub: dark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.72)',
+      trayBadgeBg: dark ? 'rgba(10,132,255,0.32)' : 'rgba(0,0,0,0.08)',
+      trayAccent: dark ? '#5cb0ff' : '#0a6ad6',
+      trayRecColor: dark ? '#ff7b63' : '#ff453a',
+      macBatteryWidth: scene.running ? '12' : '18',
+      popArrowBg: dark ? '#34343a' : '#f5f3f7',
+      popArrowShadow: dark ? 'none' : '-1px -1px 1px rgba(0,0,0,0.04)',
+
+      windowsBackdrop: dark ? 'radial-gradient(circle at 18% 18%, rgba(255,255,255,0.08), transparent 24%), linear-gradient(135deg,#0a2236,#123957 50%,#1b5672)' : 'radial-gradient(circle at 16% 16%, rgba(255,255,255,0.16), transparent 24%), linear-gradient(135deg,#163a63,#2e6ca2 50%,#78b7dc)',
+      windowsTaskbarBg: dark ? 'rgba(32,32,32,0.84)' : 'rgba(243,243,243,0.78)',
+      windowsTaskbarBorder: dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
+      windowsCenterBg: dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.42)',
+      windowsCenterBorder: dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.55)',
+      windowsBrand: dark ? '#60cdff' : '#005fb8',
+      windowsActiveBg: dark ? 'rgba(96,205,255,0.18)' : 'rgba(0,95,184,0.12)',
+      windowsIcon: dark ? '#e7e7e7' : '#333333',
+      windowsSubIcon: dark ? '#c7c7c7' : '#4a4a4a',
+      windowsBadgeBg: dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.5)',
+      windowsBatteryWidth: scene.running ? '12' : '18',
+
+      gnomeBackdrop: dark ? 'linear-gradient(160deg,#344766,#253450 52%,#192333)' : 'linear-gradient(160deg,#85a6cc,#698ab4 52%,#4f6c92)',
+      gnomeIndicatorBg: dark ? 'rgba(120,174,237,0.22)' : 'rgba(255,255,255,0.10)',
+      gnomeIndicatorStroke: dark ? '#9cc4f5' : '#ffffff',
+      gnomeBatteryWidth: scene.running ? '13' : '19',
+      gnomeArrowBg: dark ? '#2d2d2d' : '#ffffff',
+      gnomeArrowShadow: dark ? 'none' : '-1px -1px 2px rgba(0,0,0,0.08)',
+
+      kdeBackdrop: dark ? 'linear-gradient(160deg,#263841,#1d2c34 50%,#162128)' : 'linear-gradient(160deg,#7f97a7,#667f90 50%,#516877)',
+      kdePanelBg: dark ? 'rgba(42,46,50,0.96)' : 'rgba(239,240,241,0.96)',
+      kdePanelBorder: dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.12)',
+      kdeBadgeBg: dark ? 'rgba(61,174,233,0.14)' : 'rgba(61,174,233,0.10)',
+      kdeBadgeBorder: dark ? 'rgba(61,174,233,0.28)' : 'rgba(61,174,233,0.22)',
+      kdeBadgeAccent: dark ? '#5cc4f0' : '#2a90c8',
+      kdeText: dark ? '#fcfcfc' : '#232627',
+      kdeSubText: dark ? '#aaaaaa' : '#666666',
+      kdeIcon: dark ? '#c5c8ca' : '#4d4d4d',
+      kdeDivider: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.14)',
+      kdeBatteryWidth: scene.running ? '13' : '18'
+    };
+  }
+}
+</script>
+</body>
+</html>

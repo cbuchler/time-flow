@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#101014; }
+  @keyframes popScrIn { from { transform: translateX(var(--scr-from, 18px)); } to { transform: translateX(0); } }
+  @keyframes popPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes popPop { 0% { transform: scale(0.96); } 60% { transform: scale(1.015); } 100% { transform: scale(1); } }
+  @keyframes popSheetDown { from { transform: translateY(-12px); opacity: 0.3; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes deskFloat { 0%,100% { transform:translate3d(0,0,0); } 50% { transform:translate3d(-10px,6px,0); } }
+</style>
+</helmet>
+<div onClick="{{ onFrameBackgroundClick }}" style="{{ frameStyle }}">
+  <sc-if value="{{ useMacFrame }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; top:0; left:0; right:0; height:28px; display:flex; align-items:center; padding:0 12px; box-sizing:border-box; background:rgba(246,248,252,0.92); backdrop-filter:blur(24px) saturate(160%); -webkit-backdrop-filter:blur(24px) saturate(160%); border-bottom:1px solid rgba(0,0,0,0.08); box-shadow:0 1px 0 rgba(255,255,255,0.75); font-size:13px; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,sans-serif; color:#1d1d1f;">
+      <span style="display:flex; align-items:center; justify-content:center; width:18px; margin-right:13px;"><svg width="14" height="16" viewBox="0 0 24 24" fill="#1d1d1f"><path d="M16.8 12.6c0-2.8 2.3-4.1 2.4-4.2-1.3-1.9-3.3-2.1-4-2.2-1.7-.2-3.3 1-4.2 1-.9 0-2.2-1-3.6-1C5.5 6.2 3.8 7.3 2.8 9c-2 3.5-.5 8.7 1.4 11.5.9 1.4 2.1 3 3.6 2.9 1.4-.1 2-.9 3.7-.9s2.2.9 3.7.9c1.5 0 2.5-1.4 3.5-2.8 1.1-1.6 1.5-3.1 1.5-3.2 0-.1-3.4-1.4-3.4-4.8zM14.1 4.4c.8-1 1.4-2.4 1.2-3.8-1.2 0-2.7.8-3.5 1.8-.8.9-1.5 2.3-1.3 3.7 1.4.1 2.8-.7 3.6-1.7z"></path></svg></span>
+      <span style="font-weight:700; margin-right:16px;">Time &amp; Flow</span>
+      <span style="flex:1;"></span>
+      <button onClick="{{ onTogglePreviewPopover }}" style="display:flex; align-items:center; gap:5px; height:22px; padding:0 8px; margin-right:8px; border:none; border-radius:6px; background:transparent; color:#1d1d1f; font-family:inherit; font-size:12.5px; font-weight:500; cursor:pointer;">
+        <span id="preview-tray-rec" style="width:6px; height:6px; border-radius:50%; background:#ff3b30; opacity:0; transition:opacity .25s;"></span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+        <span id="preview-tray-time" style="font-variant-numeric:tabular-nums;"></span>
+      </button>
+      <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2" stroke-linecap="round" style="margin-right:14px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><path d="M12 20h.01"></path></svg>
+      <svg width="25" height="14" viewBox="0 0 30 14" style="margin-right:14px;"><rect x="1" y="2.5" width="24" height="9" rx="2.5" fill="none" stroke="#1d1d1f" stroke-width="1.4"></rect><rect x="3" y="4.5" width="17" height="5" rx="1" fill="#1d1d1f"></rect><rect x="26" y="5" width="2" height="4" rx="1" fill="#1d1d1f"></rect></svg>
+      <span style="font-weight:500;">Sun 21 Jun&nbsp;&nbsp;21:59</span>
+    </div>
+  </sc-if>
+
+<div class="pop-root" onClick="{{ onPopRootClick }}" style="{{ rootStyle }}; box-sizing:border-box; width:var(--c-width); height:var(--c-pop-h); font-family:var(--c-font); color:var(--c-fg1); background:var(--c-material); backdrop-filter:var(--c-blur); -webkit-backdrop-filter:var(--c-blur); border-radius:var(--c-radius); box-shadow:var(--c-shadow); overflow:hidden; position:{{ popoverPosition }}; {{ popoverPlacement }} display:{{ popoverDisplay }}; flex-direction:column; letter-spacing:-0.01em;">
+
+  <!-- ===== Title / navigation bar ===== -->
+  <sc-if value="{{ showTitleBar }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex; align-items:center; gap:8px; height:var(--c-headbar-h); padding:0 12px; flex:none; border-bottom:1px solid var(--c-separator); position:relative;">
+    <div style="display:flex; align-items:center; min-width:60px;">
+      <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ onBack }}" style="display:flex; align-items:center; gap:1px; background:none; border:none; cursor:pointer; color:var(--c-accent); font-family:inherit; font-size:14px; font-weight:500; padding:5px 6px 5px 2px; border-radius:var(--c-radius-sm); letter-spacing:-0.01em;" style-hover="background:var(--c-hover);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span style="margin-left:-1px;">{{ backLabel }}</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <span style="display:flex; align-items:center; gap:7px;">
+          <span style="width:9px; height:9px; border-radius:50%; background:{{ statusDot }}; box-shadow:{{ statusGlow }}; animation:{{ dotAnim }};"></span>
+          <span style="font-size:11.5px; font-weight:600; color:{{ statusColor }}; letter-spacing:0.01em;">{{ statusLabel }}</span>
+        </span>
+      </sc-if>
+    </div>
+
+    <div style="flex:1; display:flex; align-items:center; justify-content:var(--c-title-justify); padding:0 4px;">
+      <span style="font-size:14px; font-weight:600; color:var(--c-fg1); letter-spacing:-0.01em; white-space:nowrap;">{{ title }}</span>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:flex-end; min-width:60px;">
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <span></span>
+      </sc-if>
+      <sc-if value="{{ hasAction }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ onAction }}" style="background:none; border:none; cursor:pointer; color:var(--c-accent); font-family:inherit; font-size:14px; font-weight:600; padding:5px 7px; border-radius:var(--c-radius-sm); letter-spacing:-0.01em;" style-hover="background:var(--c-hover);">{{ actionLabel }}</button>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== Screen body ===== -->
+  <div style="position:relative; flex:1; min-height:0; overflow:hidden;">
+
+    <!-- HOME -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:{{ screenAnim }}; --scr-from:{{ navOffset }}; height:100%; overflow-y:auto;">
+
+        <!-- Active focus card -->
+        <sc-if value="{{ showFocusCard }}" hint-placeholder-val="{{ false }}">
+          <div style="margin:12px 12px 4px; padding:14px; border-radius:var(--c-radius); background:{{ activeCardBg }}; border:1px solid {{ activeBorder }}; box-shadow:inset 0 1px 0 var(--c-card-rim);">
+
+            <!-- TRACK active -->
+            <sc-if value="{{ activeIsTrack }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;">
+                <span style="width:10px; height:10px; border-radius:3px; flex:none; margin-top:2px; background:{{ activeColor }};"></span>
+                  <span style="flex:1; min-width:0;">
+                  <span style="display:block; font-size:14px; font-weight:600; color:var(--c-fg1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ activeTaskName }}</span>
+                  <span style="display:block; font-size:11.5px; color:var(--c-fg3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ activeProjName }}</span>
+                </span>
+              </div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <span style="font-size:38px; font-weight:600; line-height:1; letter-spacing:-0.02em; color:var(--c-fg1); font-variant-numeric:tabular-nums; font-feature-settings:'tnum' 1;">{{ elapsedStr }}</span>
+                <div style="display:flex; gap:7px;">
+                  <button onClick="{{ onPause }}" title="{{ pauseLabel }}" style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.96);">
+                    <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></sc-if>
+                    <sc-if value="{{ notPaused }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></sc-if>
+                  </button>
+                  <button onClick="{{ onStop }}" title="Stop" style="display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:var(--c-input); color:var(--c-danger); border:var(--c-input-border); border-radius:var(--c-radius-ctrl); cursor:pointer;" style-hover="background:var(--c-hover);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg>
+                  </button>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- FOCUS active -->
+            <sc-if value="{{ activeIsFocus }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div style="position:relative; width:84px; height:84px; flex:none; display:flex; align-items:center; justify-content:center;">
+                  <svg width="84" height="84" viewBox="0 0 120 120" style="position:absolute; inset:0; transform:rotate(-90deg);">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="var(--c-ring-track)" stroke-width="9"></circle>
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="var(--c-ring)" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ ringCirc }}" stroke-dashoffset="{{ ringOffset }}" style="transition:stroke-dashoffset 0.5s linear;"></circle>
+                  </svg>
+                  <span style="font-size:19px; font-weight:600; letter-spacing:-0.01em; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ focusStr }}</span>
+                </div>
+                <div style="flex:1; min-width:0;">
+                  <span style="display:block; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--c-accent);">{{ statusLabel }}</span>
+                  <span style="display:block; font-size:13.5px; font-weight:600; color:var(--c-fg1); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ activeTaskName }}</span>
+                  <span style="display:block; font-size:11.5px; color:var(--c-fg3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ activeProjName }} · {{ roundLabel }}</span>
+                  <div style="display:flex; gap:5px; margin-top:7px;">
+                    <sc-for list="{{ roundDots }}" as="d" hint-placeholder-count="4"><span style="width:7px; height:7px; border-radius:50%; background:{{ d.color }};"></span></sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; gap:7px; margin-top:12px;">
+                <button onClick="{{ onPause }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 0; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.98);">
+                  <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></sc-if>
+                  <sc-if value="{{ notPaused }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></sc-if>
+                  {{ pauseLabel }}
+                </button>
+                <button onClick="{{ onSkip }}" title="Skip" style="display:flex; align-items:center; justify-content:center; width:44px; background:var(--c-input); color:var(--c-fg1); border:var(--c-input-border); border-radius:var(--c-radius-ctrl); cursor:pointer;" style-hover="background:var(--c-hover);"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"></polygon><rect x="17" y="4" width="3" height="16" rx="1"></rect></svg></button>
+                <button onClick="{{ onStop }}" title="Stop" style="display:flex; align-items:center; justify-content:center; width:44px; background:var(--c-input); color:var(--c-danger); border:var(--c-input-border); border-radius:var(--c-radius-ctrl); cursor:pointer;" style-hover="background:var(--c-hover);"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg></button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- Day strip -->
+        <div style="margin-top:12px; border-top:1px solid var(--c-separator); border-bottom:1px solid var(--c-separator); background:var(--c-card);">
+          <div style="height:30px; display:flex; align-items:center; justify-content:center; background:transparent; color:var(--c-fg1); font-size:13px; font-weight:600; letter-spacing:-0.01em;">
+            {{ todayTitle }}
+          </div>
+          <div style="display:flex; align-items:center; height:78px; padding:0 10px; gap:4px;">
+            <button title="Previous week" style="width:22px; height:44px; border:none; background:none; color:var(--c-fg3); cursor:pointer; font-size:24px; line-height:1;">‹</button>
+            <sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+              <button onClick="{{ d.onPick }}" style="flex:1; min-width:0; height:52px; display:flex; flex-direction:column; align-items:center; gap:5px; border:none; background:none; padding:0; cursor:pointer; font-family:inherit;">
+                <span style="width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:{{ d.dayBg }}; color:{{ d.dayColor }}; font-size:16px; font-weight:700;">{{ d.label }}</span>
+                <span style="height:13px; line-height:13px; font-size:11px; font-weight:600; color:{{ d.timeColor }}; font-variant-numeric:tabular-nums;">{{ d.time }}</span>
+              </button>
+            </sc-for>
+            <button title="Next week" style="width:22px; height:44px; border:none; background:none; color:var(--c-fg3); cursor:pointer; font-size:24px; line-height:1;">›</button>
+          </div>
+        </div>
+
+        <!-- Today's entries -->
+        <div style="background:var(--c-material);">
+          <sc-for list="{{ taskRows }}" as="it" hint-placeholder-count="4">
+            <div style="position:relative; border-bottom:1px solid var(--c-separator);">
+              <div onClick="{{ it.onEdit }}" onContextMenu="{{ it.onContextMenu }}" style="position:relative; z-index:1; display:flex; align-items:center; gap:12px; min-height:62px; padding:8px 14px 8px 18px; background:{{ it.rowBg }}; cursor:default;" style-hover="background:var(--c-hover);">
+                <span style="width:9px; height:34px; border-radius:4px; flex:none; background:{{ it.color }}; opacity:{{ it.colorOpacity }};"></span>
+                <span style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+                  <span style="font-size:11.5px; font-weight:600; color:var(--c-fg3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ it.project }}</span>
+                  <span style="font-size:14px; font-weight:500; color:var(--c-fg1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ it.task }}</span>
+                  <sc-if value="{{ it.hasNote }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:12.5px; font-weight:400; color:var(--c-fg2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ it.note }}</span>
+                  </sc-if>
+                </span>
+                <span style="font-size:21px; font-weight:500; color:var(--c-fg1); font-variant-numeric:tabular-nums; min-width:58px; text-align:right;">{{ it.dur }}</span>
+                <button onClick="{{ it.onToggle }}" title="{{ it.actionTitle }}" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; flex:none; border-radius:50%; cursor:pointer; background:{{ it.btnBg }}; color:{{ it.btnColor }}; border:2px solid {{ it.btnBorder }};" style-hover="filter:brightness(1.05);">
+                  <sc-if value="{{ it.isActive }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"></rect></svg></sc-if>
+                  <sc-if value="{{ it.notActive }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 19 12 7 20 7 4"></polygon></svg></sc-if>
+                </button>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ selectedDayEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="min-height:228px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:22px 28px; text-align:center; border-bottom:1px solid var(--c-separator);">
+              <span style="width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--c-input); color:var(--c-fg3); border:var(--c-input-border);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+              </span>
+              <span style="display:flex; flex-direction:column; gap:3px;">
+                <span style="font-size:14px; font-weight:700; color:var(--c-fg1);">No entries</span>
+                <span style="font-size:12px; line-height:1.35; color:var(--c-fg3);">No time recorded for this day.</span>
+              </span>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- START (timer or focus) -->
+    <sc-if value="{{ isStart }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:{{ screenAnim }}; --scr-from:{{ navOffset }}; height:100%; padding:16px 14px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:6px; position:relative; z-index:20;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Project</label>
+            <button onClick="{{ onTogglePicker }}" style="width:100%; display:flex; align-items:center; gap:9px; padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:var(--c-hover);">
+              <span style="width:10px; height:10px; border-radius:3px; flex:none; background:{{ selProjColor }};"></span>
+              <span style="flex:1; font-size:13.5px; font-weight:600; color:var(--c-fg1);">{{ selProjName }}</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--c-fg3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <sc-if value="{{ pickerOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--c-popmenu); backdrop-filter:var(--c-blur); -webkit-backdrop-filter:var(--c-blur); border:1px solid var(--c-separator); border-radius:var(--c-radius-sm); box-shadow:var(--c-shadow); overflow:hidden; z-index:30; animation:popPop .16s var(--c-ease);">
+                <div style="display:flex; align-items:center; gap:7px; padding:7px 10px; border-bottom:1px solid var(--c-separator);">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-fg3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <input value="{{ pickerSearch }}" onInput="{{ onPickerSearch }}" placeholder="Search projects" style="flex:1; border:none; outline:none; background:none; font-family:inherit; font-size:13px; color:var(--c-fg1);" />
+                </div>
+                <div style="max-height:150px; overflow-y:auto; padding:4px;">
+                  <sc-for list="{{ filteredProjects }}" as="p" hint-placeholder-count="4">
+                    <button onClick="{{ p.onPick }}" style="width:100%; display:flex; align-items:center; gap:9px; padding:7px 8px; background:{{ p.rowBg }}; border:none; border-radius:calc(var(--c-radius-sm) - 2px); cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:var(--c-hover);">
+                      <span style="width:9px; height:9px; border-radius:3px; flex:none; background:{{ p.color }};"></span>
+                      <span style="flex:1; font-size:13px; font-weight:500; color:var(--c-fg1);">{{ p.name }}</span>
+                      <span style="font-size:11px; color:var(--c-fg3);">{{ p.client }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+                <button onClick="{{ onNewProjectFromPicker }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:9px 12px; background:none; border:none; border-top:1px solid var(--c-separator); cursor:pointer; font-family:inherit; color:var(--c-accent); font-size:12.5px; font-weight:500;" style-hover="background:var(--c-hover);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  {{ pickerNewProjectLabel }}
+                </button>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Task</label>
+            <input value="{{ selTask }}" onInput="{{ onSelTask }}" placeholder="What are you working on?" style="padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); font-family:inherit; font-size:13.5px; color:var(--c-fg1); outline:none;" style-focus="border-color:var(--c-accent); box-shadow:0 0 0 3px var(--c-accent-ring);" />
+          </div>
+
+          <sc-if value="{{ startIsFocus }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; padding:10px 12px; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+                <div style="font-size:11px; color:var(--c-fg3);">Focus</div>
+                <div style="font-size:16px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ focusLenLabel }}</div>
+              </div>
+              <div style="flex:1; padding:10px 12px; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+                <div style="font-size:11px; color:var(--c-fg3);">Rounds</div>
+                <div style="font-size:16px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ roundsLabel }}</div>
+              </div>
+            </div>
+            <div style="background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+              <div style="display:flex; align-items:center; gap:10px; padding:9px 11px; border-bottom:1px solid var(--c-separator);">
+                <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                  <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">Break time</span>
+                  <span style="font-size:11px; color:var(--c-fg3);">Length of each break</span>
+                </span>
+                <div style="display:flex; align-items:center; gap:0; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                  <button onClick="{{ onBreakTimeDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                  <span style="min-width:48px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ breakTimeLabel }}</span>
+                  <button onClick="{{ onBreakTimeInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; padding:9px 11px;">
+                <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                  <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">Break every</span>
+                  <span style="font-size:11px; color:var(--c-fg3);">How often to pause</span>
+                </span>
+                <div style="display:flex; align-items:center; gap:0; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                  <button onClick="{{ onBreakEveryDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                  <span style="min-width:48px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ breakEveryLabel }}</span>
+                  <button onClick="{{ onBreakEveryInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <button onClick="{{ onStartConfirm }}" style="margin-top:2px; display:flex; align-items:center; justify-content:center; gap:7px; padding:11px 0; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:14px; font-weight:600;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.99);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+            {{ startActionLabel }}
+          </button>
+
+          <button onClick="{{ onGoManual }}" style="background:none; border:none; cursor:pointer; color:var(--c-fg3); font-family:inherit; font-size:12px; padding:4px;" style-hover="color:var(--c-accent);">{{ manualLinkLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- SETTINGS -->
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:{{ screenAnim }}; --scr-from:{{ navOffset }}; height:100%; overflow-y:auto; padding:14px;">
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--c-fg3); padding:0 4px 7px;">Pomodoro</div>
+        <div style="background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden; margin-bottom:18px;">
+          <sc-for list="{{ pomoSteppers }}" as="s" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:10px; padding:9px 12px; border-bottom:{{ s.border }};">
+              <span style="flex:1; font-size:13.5px; color:var(--c-fg1);">{{ s.label }}</span>
+              <div style="display:flex; align-items:center; gap:0; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <button onClick="{{ s.onDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                <span style="min-width:38px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ s.value }}</span>
+                <button onClick="{{ s.onInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--c-fg3); padding:0 4px 7px;">General</div>
+        <div style="background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden; margin-bottom:18px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--c-separator);">
+            <span style="flex:1; font-size:13.5px; color:var(--c-fg1);">Idle detection</span>
+            <button onClick="{{ onToggleIdle }}" style="position:relative; width:38px; height:22px; border-radius:11px; border:none; cursor:pointer; padding:0; background:{{ idleTrack }}; transition:background .2s var(--c-ease);"><span style="position:absolute; top:2px; left:{{ idleKnob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:left .2s var(--c-ease);"></span></button>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px;">
+            <span style="flex:1; font-size:13.5px; color:var(--c-fg1);">Launch at login</span>
+            <button onClick="{{ onToggleLaunch }}" style="position:relative; width:38px; height:22px; border-radius:11px; border:none; cursor:pointer; padding:0; background:{{ launchTrack }}; transition:background .2s var(--c-ease);"><span style="position:absolute; top:2px; left:{{ launchKnob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:left .2s var(--c-ease);"></span></button>
+          </div>
+        </div>
+
+        <div style="font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--c-fg3); padding:0 4px 7px;">Appearance</div>
+        <div style="background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden; padding:8px 10px;">
+          <div style="display:flex; gap:4px; background:var(--c-seg-track); border-radius:var(--c-radius-sm); padding:2px;">
+            <sc-for list="{{ appearanceOpts }}" as="a" hint-placeholder-count="3">
+              <button onClick="{{ a.onPick }}" style="flex:1; padding:6px 0; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:{{ a.weight }}; border-radius:calc(var(--c-radius-sm) - 2px); background:{{ a.bg }}; color:{{ a.color }}; box-shadow:{{ a.shadow }};">{{ a.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- NEW ENTRY -->
+    <sc-if value="{{ isNewEntry }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:{{ screenAnim }}; --scr-from:{{ navOffset }}; height:100%; overflow-y:auto; padding:16px 14px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Project</label>
+            <div style="display:flex; align-items:center; gap:8px; padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+              <span style="width:9px; height:9px; border-radius:3px; flex:none; background:{{ selProjColor }};"></span>
+              <span style="flex:1; font-size:13.5px; color:var(--c-fg1);">{{ selProjName }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-fg3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Task</label>
+            <input value="{{ formTask }}" onInput="{{ onFormTask }}" placeholder="What did you work on?" style="padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); font-family:inherit; font-size:13.5px; color:var(--c-fg1); outline:none;" style-focus="border-color:var(--c-accent); box-shadow:0 0 0 3px var(--c-accent-ring);" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Duration</label>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; display:flex; align-items:center; gap:0; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <button onClick="{{ onHrDec }}" style="width:34px; height:36px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:17px;" style-hover="background:var(--c-hover);">−</button>
+                <span style="flex:1; text-align:center; font-size:14px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ formHr }}h</span>
+                <button onClick="{{ onHrInc }}" style="width:34px; height:36px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:17px;" style-hover="background:var(--c-hover);">+</button>
+              </div>
+              <div style="flex:1; display:flex; align-items:center; gap:0; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <button onClick="{{ onMinDec }}" style="width:34px; height:36px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:17px;" style-hover="background:var(--c-hover);">−</button>
+                <span style="flex:1; text-align:center; font-size:14px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ formMin }}m</span>
+                <button onClick="{{ onMinInc }}" style="width:34px; height:36px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:17px;" style-hover="background:var(--c-hover);">+</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Notes</label>
+            <textarea value="{{ formNotes }}" onInput="{{ onFormNotes }}" placeholder="Optional" style="padding:9px 11px; min-height:58px; resize:none; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); font-family:inherit; font-size:13px; color:var(--c-fg1); outline:none;" style-focus="border-color:var(--c-accent); box-shadow:0 0 0 3px var(--c-accent-ring);"></textarea>
+          </div>
+          <button onClick="{{ onAction }}" style="margin-top:2px; padding:11px 0; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:14px; font-weight:600;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.99);">{{ newEntrySaveLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- NEW PROJECT -->
+    <sc-if value="{{ isNewProject }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:{{ screenAnim }}; --scr-from:{{ navOffset }}; height:100%; overflow-y:auto; padding:16px 14px;">
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Name</label>
+            <input value="{{ npName }}" onInput="{{ onNpName }}" placeholder="Project name" style="padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); font-family:inherit; font-size:13.5px; color:var(--c-fg1); outline:none;" style-focus="border-color:var(--c-accent); box-shadow:0 0 0 3px var(--c-accent-ring);" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Client</label>
+            <input value="{{ npClient }}" onInput="{{ onNpClient }}" placeholder="Client or company" style="padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); font-family:inherit; font-size:13.5px; color:var(--c-fg1); outline:none;" style-focus="border-color:var(--c-accent); box-shadow:0 0 0 3px var(--c-accent-ring);" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:7px;">
+            <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Color tag</label>
+            <div style="display:flex; gap:9px; padding:2px 0;">
+              <sc-for list="{{ colorSwatches }}" as="c" hint-placeholder-count="6">
+                <button onClick="{{ c.onPick }}" style="width:26px; height:26px; border-radius:50%; cursor:pointer; background:{{ c.hex }}; border:{{ c.ring }}; outline:none; padding:0;"></button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+            <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+              <span style="font-size:13.5px; color:var(--c-fg1);">Billable</span>
+              <span style="font-size:11.5px; color:var(--c-fg3);">Track an hourly rate</span>
+            </span>
+            <button onClick="{{ onToggleBillable }}" style="position:relative; width:38px; height:22px; border-radius:11px; border:none; cursor:pointer; padding:0; background:{{ billTrack }}; transition:background .2s var(--c-ease);"><span style="position:absolute; top:2px; left:{{ billKnob }}; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.3); transition:left .2s var(--c-ease);"></span></button>
+          </div>
+          <sc-if value="{{ npBillable }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-size:12px; font-weight:600; color:var(--c-fg2);">Hourly rate</label>
+              <div style="display:flex; align-items:center; gap:6px; padding:9px 11px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+                <span style="font-size:14px; color:var(--c-fg3);">$</span>
+                <input value="{{ npRate }}" onInput="{{ onNpRate }}" placeholder="0" style="flex:1; border:none; outline:none; background:none; font-family:inherit; font-size:13.5px; color:var(--c-fg1); font-variant-numeric:tabular-nums;" />
+                <span style="font-size:12.5px; color:var(--c-fg3);">/ hour</span>
+              </div>
+            </div>
+          </sc-if>
+          <button onClick="{{ onAction }}" style="margin-top:2px; padding:11px 0; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:14px; font-weight:600;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.99);">{{ newProjectCreateLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <!-- ===== Edit entry sheet ===== -->
+  <sc-if value="{{ entryEditOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onEditBackdrop }}" style="position:absolute; top:var(--c-sheet-top); left:0; right:0; bottom:0; z-index:82; display:flex; align-items:flex-start; justify-content:center; background:{{ modalBackdrop }};">
+      <div onClick="{{ onModalSheetClick }}" role="dialog" aria-modal="true" style="width:100%; max-height:100%; overflow:hidden; display:flex; flex-direction:column; border-radius:0 0 var(--c-radius) var(--c-radius); background:var(--c-sheet-material); backdrop-filter:var(--c-sheet-blur); -webkit-backdrop-filter:var(--c-sheet-blur); border:var(--c-glass-border); border-top:none; box-shadow:var(--c-shadow); animation:popSheetDown .2s var(--c-ease) forwards;">
+        <div style="height:38px; display:flex; align-items:center; justify-content:center; position:relative; flex:none;">
+          <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">{{ editEntryTitle }}</span>
+        </div>
+        <div style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; overflow-x:hidden; min-width:0; min-height:0;">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--c-fg2);">Project</label>
+            <input value="{{ editProjectInput }}" onInput="{{ onEditProjectInput }}" placeholder="Project name" style="padding:9px 10px; border:var(--c-input-border); border-radius:var(--c-radius-sm); outline:none; background:var(--c-input); font-family:inherit; font-size:13.5px; font-weight:600; color:var(--c-fg1);" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--c-fg2);">Task</label>
+            <input value="{{ editTaskInput }}" onInput="{{ onEditTaskInput }}" placeholder="Task name" style="padding:9px 10px; border:var(--c-input-border); border-radius:var(--c-radius-sm); outline:none; background:var(--c-input); font-family:inherit; font-size:13.5px; font-weight:600; color:var(--c-fg1);" />
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--c-fg2);">Logged time</label>
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1; display:flex; align-items:center; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <button onClick="{{ onEditHourDec }}" style="width:30px; height:34px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px;" style-hover="background:var(--c-hover);">−</button>
+                <span style="flex:1; text-align:center; font-size:13px; font-weight:700; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ editHours }}h</span>
+                <button onClick="{{ onEditHourInc }}" style="width:30px; height:34px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px;" style-hover="background:var(--c-hover);">+</button>
+              </div>
+              <div style="flex:1; display:flex; align-items:center; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <button onClick="{{ onEditMinuteDec }}" style="width:30px; height:34px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px;" style-hover="background:var(--c-hover);">−</button>
+                <span style="flex:1; text-align:center; font-size:13px; font-weight:700; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ editMinutes }}m</span>
+                <button onClick="{{ onEditMinuteInc }}" style="width:30px; height:34px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px;" style-hover="background:var(--c-hover);">+</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--c-fg2);">Note</label>
+            <textarea value="{{ editNote }}" onInput="{{ onEditNote }}" placeholder="Optional note for this task" style="min-height:62px; resize:none; padding:9px 10px; border:var(--c-input-border); border-radius:var(--c-radius-sm); outline:none; background:var(--c-input); font-family:inherit; font-size:13px; color:var(--c-fg1);"></textarea>
+          </div>
+        </div>
+        <div style="flex:none; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px 14px;">
+          <button onClick="{{ onEditDelete }}" style="display:flex; align-items:center; justify-content:center; height:28px; padding:0 12px; border:var(--c-input-border); border-radius:var(--c-radius-ctrl); background:transparent; color:var(--c-danger); cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; white-space:nowrap;" style-hover="background:var(--c-hover);">{{ editDeleteLabel }}</button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button onClick="{{ onCloseEdit }}" style="display:flex; align-items:center; justify-content:center; height:28px; padding:0 14px; border:var(--c-input-border); border-radius:var(--c-radius-ctrl); background:var(--c-input); color:var(--c-fg1); cursor:pointer; font-family:inherit; font-size:13px; font-weight:500; white-space:nowrap;" style-hover="background:var(--c-hover);">{{ cancelLabel }}</button>
+            <button onClick="{{ onEditSave }}" style="display:flex; align-items:center; justify-content:center; height:28px; padding:0 16px; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; white-space:nowrap;" style-hover="filter:brightness(1.06);">{{ editSaveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== macOS-style sheet modal: new timer ===== -->
+  <sc-if value="{{ timerModalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onModalBackdrop }}" style="position:absolute; top:var(--c-sheet-top); left:0; right:0; bottom:0; z-index:80; display:flex; align-items:flex-start; justify-content:center; background:{{ modalBackdrop }};">
+      <div onClick="{{ onModalSheetClick }}" role="dialog" aria-modal="true" style="width:100%; max-height:100%; overflow:hidden; display:flex; flex-direction:column; border-radius:0 0 var(--c-radius) var(--c-radius); background:var(--c-sheet-material); backdrop-filter:var(--c-sheet-blur); -webkit-backdrop-filter:var(--c-sheet-blur); border:var(--c-glass-border); border-top:none; box-shadow:var(--c-shadow); animation:popSheetDown .2s var(--c-ease) forwards;">
+        <div style="height:38px; display:flex; align-items:center; justify-content:center; position:relative; flex:none;">
+          <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">{{ timerModalTitle }}</span>
+        </div>
+
+        <div style="padding:14px; display:flex; flex-direction:column; gap:12px; overflow-y:auto; min-height:0;">
+          <div style="position:relative; display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--c-fg2);">Project</label>
+            <div style="width:100%; display:flex; align-items:center; gap:9px; padding:8px 10px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+              <span style="width:10px; height:10px; border-radius:3px; flex:none; background:{{ selProjColor }};"></span>
+              <input value="{{ modalProjectInput }}" onInput="{{ onModalProjectInput }}" onFocus="{{ onModalProjectFocus }}" placeholder="Project name" style="flex:1; min-width:0; border:none; outline:none; background:none; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--c-fg1);" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--c-fg3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <sc-if value="{{ modalProjectOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:95; overflow:hidden; background:var(--c-popmenu); border:1px solid var(--c-separator); border-radius:var(--c-radius-sm); box-shadow:var(--c-shadow);">
+                <div style="max-height:168px; overflow-y:auto; overflow-x:hidden; padding:4px;">
+                  <sc-for list="{{ modalProjects }}" as="p" hint-placeholder-count="4">
+                    <button onClick="{{ p.onPick }}" style="width:100%; display:flex; align-items:center; gap:8px; padding:7px 8px; background:{{ p.rowBg }}; border:none; border-radius:calc(var(--c-radius-sm) - 2px); cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:var(--c-hover);">
+                      <span style="width:9px; height:9px; border-radius:3px; flex:none; background:{{ p.color }};"></span>
+                      <span style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;">
+                        <span style="font-size:13px; font-weight:600; color:var(--c-fg1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.name }}</span>
+                        <span style="font-size:10.5px; color:var(--c-fg3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.client }}</span>
+                      </span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="position:relative; display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:11.5px; font-weight:700; color:var(--c-fg2);">Task</label>
+            <div style="width:100%; display:flex; align-items:center; gap:9px; padding:8px 10px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm);">
+              <input value="{{ modalTaskInput }}" onInput="{{ onModalTaskInput }}" onFocus="{{ onModalTaskFocus }}" placeholder="Task name" style="flex:1; min-width:0; border:none; outline:none; background:none; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--c-fg1);" />
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--c-fg3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <sc-if value="{{ modalTaskOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:95; overflow:hidden; background:var(--c-popmenu); border:1px solid var(--c-separator); border-radius:var(--c-radius-sm); box-shadow:var(--c-shadow);">
+                <div style="max-height:168px; overflow-y:auto; overflow-x:hidden; padding:4px;">
+                  <sc-for list="{{ modalTasks }}" as="task" hint-placeholder-count="5">
+                    <button onClick="{{ task.onPick }}" style="width:100%; display:flex; flex-direction:column; gap:1px; padding:7px 8px; background:{{ task.rowBg }}; border:none; border-radius:calc(var(--c-radius-sm) - 2px); cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:var(--c-hover);">
+                      <span style="font-size:13px; font-weight:700; color:var(--c-fg1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ task.name }}</span>
+                      <span style="font-size:10.5px; color:var(--c-fg3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ task.scopeLabel }} · {{ task.kind }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <button onClick="{{ onToggleTimerFocus }}" style="display:flex; align-items:center; gap:9px; padding:9px 10px; background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); cursor:pointer; font-family:inherit; text-align:left;" style-hover="background:var(--c-hover);">
+            <span style="width:17px; height:17px; border-radius:5px; flex:none; display:flex; align-items:center; justify-content:center; background:{{ focusCheckBg }}; color:{{ focusCheckColor }}; border:1px solid {{ focusCheckBorder }};">
+              <sc-if value="{{ timerFocusEnabled }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if>
+            </span>
+            <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+              <span style="font-size:13px; font-weight:700; color:var(--c-fg1);">{{ focusSessionLabel }}</span>
+              <span style="font-size:11px; color:var(--c-fg3);">Use Pomodoro timing for this timer</span>
+            </span>
+          </button>
+
+          <sc-if value="{{ timerFocusEnabled }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 11px; border-bottom:1px solid var(--c-separator);">
+                  <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">Focus</span>
+                    <span style="font-size:11px; color:var(--c-fg3);">Default from Settings</span>
+                  </span>
+                  <div style="display:flex; align-items:center; gap:0; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                    <button onClick="{{ onFocusLenDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                    <span style="min-width:48px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ focusLenLabel }}</span>
+                    <button onClick="{{ onFocusLenInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 11px;">
+                  <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">Rounds</span>
+                    <span style="font-size:11px; color:var(--c-fg3);">Default from Settings</span>
+                  </span>
+                  <div style="display:flex; align-items:center; gap:0; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                    <button onClick="{{ onRoundsDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                    <span style="min-width:48px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ roundsLabel }}</span>
+                    <button onClick="{{ onRoundsInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+                  </div>
+                </div>
+              </div>
+              <div style="background:var(--c-input); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 11px; border-bottom:1px solid var(--c-separator);">
+                  <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">Break time</span>
+                    <span style="font-size:11px; color:var(--c-fg3);">Length of each break</span>
+                  </span>
+                  <div style="display:flex; align-items:center; gap:0; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                    <button onClick="{{ onBreakTimeDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                    <span style="min-width:48px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ breakTimeLabel }}</span>
+                    <button onClick="{{ onBreakTimeInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; padding:9px 11px;">
+                  <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                    <span style="font-size:13px; font-weight:600; color:var(--c-fg1);">Break every</span>
+                    <span style="font-size:11px; color:var(--c-fg3);">How often to pause</span>
+                  </span>
+                  <div style="display:flex; align-items:center; gap:0; background:var(--c-card); border:var(--c-input-border); border-radius:var(--c-radius-sm); overflow:hidden;">
+                    <button onClick="{{ onBreakEveryDec }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">−</button>
+                    <span style="min-width:48px; text-align:center; font-size:13px; font-weight:600; color:var(--c-fg1); font-variant-numeric:tabular-nums;">{{ breakEveryLabel }}</span>
+                    <button onClick="{{ onBreakEveryInc }}" style="width:28px; height:26px; border:none; background:none; cursor:pointer; color:var(--c-fg2); font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--c-hover);">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="flex:none; display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:10px 14px 14px;">
+          <button onClick="{{ onCloseTimerModal }}" style="display:flex; align-items:center; justify-content:center; height:28px; padding:0 14px; border:var(--c-input-border); border-radius:var(--c-radius-ctrl); background:var(--c-input); color:var(--c-fg1); cursor:pointer; font-family:inherit; font-size:13px; font-weight:500; white-space:nowrap;" style-hover="background:var(--c-hover);">{{ cancelLabel }}</button>
+          <button onClick="{{ onTimerModalStart }}" style="display:flex; align-items:center; justify-content:center; gap:6px; height:28px; padding:0 16px; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; white-space:nowrap;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.99);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+            {{ timerModalStartLabel }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===== Footer toolbar (home only) ===== -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:none; display:flex; align-items:center; gap:8px; padding:9px 12px; border-top:1px solid var(--c-separator); background:var(--c-footer-bg);">
+      <button onClick="{{ onStartNew }}" style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:9px 0; background:var(--c-accent); color:var(--c-accent-fg); border:none; border-radius:var(--c-radius-ctrl); cursor:pointer; font-family:inherit; font-size:13px; font-weight:600;" style-hover="filter:brightness(1.06);" style-active="transform:scale(0.98);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+        {{ footerNewLabel }}
+      </button>
+      <button onClick="{{ onOpenSettings }}" title="Settings" style="display:flex; align-items:center; justify-content:center; width:38px; height:38px; flex:none; background:var(--c-input); color:var(--c-fg2); border:var(--c-input-border); border-radius:var(--c-radius-ctrl); cursor:pointer;" style-hover="background:var(--c-hover); color:var(--c-fg1);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+  </sc-if>
+</div>
+  <sc-if value="{{ settingsWindowOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute; top:58px; left:56px; width:680px; height:620px; z-index:7; display:flex; flex-direction:column; overflow:hidden; border-radius:12px; background:rgba(246,248,252,0.92); backdrop-filter:blur(34px) saturate(170%); -webkit-backdrop-filter:blur(34px) saturate(170%); border:1px solid rgba(255,255,255,0.72); box-shadow:0 28px 70px rgba(0,0,0,0.42), 0 0 0 0.5px rgba(0,0,0,0.14); font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,sans-serif; color:#1d1d1f; pointer-events:auto;">
+      <div style="height:42px; flex:none; display:flex; align-items:center; position:relative; padding:0 14px; background:rgba(255,255,255,0.46); border-bottom:1px solid rgba(0,0,0,0.1);">
+        <button onClick="{{ onCloseSettingsWindow }}" title="Close settings" style="width:12px; height:12px; border-radius:50%; border:none; padding:0; margin-right:8px; cursor:pointer; background:#ff5f57;"></button>
+        <span style="width:12px; height:12px; border-radius:50%; margin-right:8px; background:#ffbd2e;"></span>
+        <span style="width:12px; height:12px; border-radius:50%; background:#28c840;"></span>
+        <span style="position:absolute; left:0; right:0; text-align:center; pointer-events:none; font-size:13.5px; font-weight:700;">{{ settingsWindowTitle }}</span>
+      </div>
+      <div style="flex:1; min-height:0; display:flex;">
+        <div style="width:176px; flex:none; padding:12px 10px; border-right:1px solid rgba(0,0,0,0.09); background:linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0.22));">
+          <button onClick="{{ onSelectSettingsGeneral }}" style="width:100%; min-height:30px; display:flex; align-items:center; gap:9px; padding:7px 10px; border:none; border-radius:8px; background:{{ settingsGeneralBg }}; color:{{ settingsGeneralColor }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; text-align:left;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5"></path><path d="M9 2h6"></path></svg>
+            General
+          </button>
+          <button onClick="{{ onSelectSettingsFocus }}" style="width:100%; min-height:30px; display:flex; align-items:center; gap:9px; padding:7px 10px; margin-top:3px; border:none; border-radius:8px; background:{{ settingsFocusBg }}; color:{{ settingsFocusColor }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; text-align:left;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            Focus
+          </button>
+          <button onClick="{{ onSelectSettingsProjects }}" style="width:100%; min-height:30px; display:flex; align-items:center; gap:9px; padding:7px 10px; margin-top:3px; border:none; border-radius:8px; background:{{ settingsProjectsBg }}; color:{{ settingsProjectsColor }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; text-align:left;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18"></path><path d="M6 7v13"></path><path d="M18 7v13"></path><path d="M8 4h8"></path></svg>
+            Projects
+          </button>
+          <button onClick="{{ onSelectSettingsTasks }}" style="width:100%; min-height:30px; display:flex; align-items:center; gap:9px; padding:7px 10px; margin-top:3px; border:none; border-radius:8px; background:{{ settingsTasksBg }}; color:{{ settingsTasksColor }}; cursor:pointer; font-family:inherit; font-size:13px; font-weight:600; text-align:left;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg>
+            Tasks
+          </button>
+        </div>
+        <div style="flex:1; min-width:0; overflow-y:auto; padding:22px 24px 28px;">
+          <div style="display:flex; flex-direction:column; gap:22px;">
+            <sc-if value="{{ settingsPageGeneral }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:22px;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <span style="font-size:28px; line-height:1.1; font-weight:700; letter-spacing:-0.03em; color:#1d1d1f;">General</span>
+                  <span style="font-size:13px; line-height:1.45; color:rgba(0,0,0,0.54);">Appearance and app behavior.</span>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:600; color:rgba(0,0,0,0.56); margin-bottom:8px;">Appearance</div>
+                  <div style="border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6); padding:10px;">
+                    <div style="display:flex; gap:4px; background:rgba(0,0,0,0.06); border-radius:10px; padding:3px;">
+                    <sc-for list="{{ appearanceOpts }}" as="a" hint-placeholder-count="3">
+                      <button onClick="{{ a.onPick }}" style="flex:1; min-height:30px; padding:7px 0; border:none; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:{{ a.weight }}; border-radius:8px; background:{{ a.bg }}; color:#1d1d1f; box-shadow:{{ a.shadow }};">{{ a.label }}</button>
+                    </sc-for>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:600; color:rgba(0,0,0,0.56); margin-bottom:8px;">Behavior</div>
+                  <div style="overflow:hidden; border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6);">
+                    <div style="display:flex; align-items:center; gap:12px; min-height:52px; padding:10px 14px; border-bottom:1px solid rgba(0,0,0,0.08);">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:13.5px; font-weight:600; color:#1d1d1f;">Idle detection</span>
+                      <span style="font-size:12px; color:rgba(0,0,0,0.5);">Prompt when the Mac has been idle.</span>
+                    </span>
+                    <button onClick="{{ onToggleIdle }}" style="position:relative; width:42px; height:26px; border-radius:13px; border:none; cursor:pointer; padding:0; background:{{ idleTrack }};"><span style="position:absolute; top:2px; left:{{ idleKnob }}; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.22);"></span></button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; min-height:52px; padding:10px 14px;">
+                    <span style="flex:1; display:flex; flex-direction:column; gap:1px;">
+                      <span style="font-size:13.5px; font-weight:600; color:#1d1d1f;">Launch at login</span>
+                      <span style="font-size:12px; color:rgba(0,0,0,0.5);">Start Time &amp; Flow automatically.</span>
+                    </span>
+                    <button onClick="{{ onToggleLaunch }}" style="position:relative; width:42px; height:26px; border-radius:13px; border:none; cursor:pointer; padding:0; background:{{ launchTrack }};"><span style="position:absolute; top:2px; left:{{ launchKnob }}; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.22);"></span></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ settingsPageFocus }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:22px;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <span style="font-size:28px; line-height:1.1; font-weight:700; letter-spacing:-0.03em; color:#1d1d1f;">Focus</span>
+                  <span style="font-size:13px; line-height:1.45; color:rgba(0,0,0,0.54);">Default Pomodoro timing for focus sessions.</span>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:600; color:rgba(0,0,0,0.56); margin-bottom:8px;">Timer defaults</div>
+                  <div style="overflow:hidden; border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6);">
+                  <sc-for list="{{ pomoSteppers }}" as="s" hint-placeholder-count="4">
+                    <div style="display:flex; align-items:center; gap:12px; min-height:50px; padding:10px 14px; border-bottom:{{ s.border }};">
+                      <span style="flex:1; font-size:13.5px; font-weight:600; color:#1d1d1f;">{{ s.label }}</span>
+                      <div style="display:flex; align-items:center; overflow:hidden; border-radius:9px; border:1px solid rgba(0,0,0,0.1); background:rgba(246,248,252,0.86);">
+                        <button onClick="{{ s.onDec }}" style="width:30px; height:28px; border:none; background:none; cursor:pointer; color:rgba(0,0,0,0.58); font-size:16px;">−</button>
+                        <span style="min-width:48px; text-align:center; font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; color:#1d1d1f;">{{ s.value }}</span>
+                        <button onClick="{{ s.onInc }}" style="width:30px; height:28px; border:none; background:none; cursor:pointer; color:rgba(0,0,0,0.58); font-size:16px;">+</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ settingsPageProjects }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:18px;">
+                <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
+                  <span style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-size:28px; line-height:1.1; font-weight:700; letter-spacing:-0.03em; color:#1d1d1f;">Projects</span>
+                    <span style="font-size:13px; line-height:1.45; color:rgba(0,0,0,0.54);">Manage client projects and color tags.</span>
+                  </span>
+                  <button onClick="{{ onNewSettingsProject }}" style="height:28px; padding:0 11px; border:none; border-radius:8px; background:rgba(10,132,255,0.14); color:#0067d8; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;">New Project</button>
+                </div>
+                <sc-if value="{{ settingsProjectEditing }}" hint-placeholder-val="{{ false }}">
+                  <div style="border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6); padding:16px;">
+                    <div style="margin-bottom:14px;">
+                      <span style="font-size:17px; font-weight:600; color:#1d1d1f;">{{ settingsProjectEditorTitle }}</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                      <label style="display:flex; flex-direction:column; gap:6px; font-size:12px; font-weight:600; color:rgba(0,0,0,0.56);">Name<input value="{{ settingsProjectName }}" onInput="{{ onSettingsProjectName }}" style="height:36px; padding:0 11px; border:1px solid rgba(0,0,0,0.12); border-radius:9px; background:rgba(255,255,255,0.8); font-family:inherit; font-size:13px; font-weight:600; color:#1d1d1f; outline:none;" /></label>
+                      <label style="display:flex; flex-direction:column; gap:6px; font-size:12px; font-weight:600; color:rgba(0,0,0,0.56);">Client<input value="{{ settingsProjectClient }}" onInput="{{ onSettingsProjectClient }}" style="height:36px; padding:0 11px; border:1px solid rgba(0,0,0,0.12); border-radius:9px; background:rgba(255,255,255,0.8); font-family:inherit; font-size:13px; font-weight:600; color:#1d1d1f; outline:none;" /></label>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:12px;">
+                      <span style="font-size:12px; font-weight:600; color:rgba(0,0,0,0.56);">Color tag</span>
+                      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                      <sc-for list="{{ settingsProjectSwatches }}" as="sw" hint-placeholder-count="8">
+                        <button onClick="{{ sw.onPick }}" title="{{ sw.hex }}" style="width:26px; height:26px; border-radius:8px; border:{{ sw.ring }}; background:{{ sw.hex }}; cursor:pointer;"></button>
+                      </sc-for>
+                      </div>
+                    </div>
+                    <sc-if value="{{ settingsProjectDeleteConfirm }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:14px; padding:12px; border-radius:10px; background:rgba(255,59,48,0.09); border:1px solid rgba(255,59,48,0.18);">
+                        <div style="font-size:13px; font-weight:700; color:#b00020;">Delete this project?</div>
+                        <div style="font-size:12px; line-height:1.4; color:rgba(0,0,0,0.54); margin-top:3px;">Project tasks are removed and existing entries move to the first remaining project.</div>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px;">
+                      <sc-if value="{{ settingsProjectCanDelete }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ onDeleteSettingsProject }}" style="height:30px; padding:0 12px; border:1px solid rgba(0,0,0,0.12); border-radius:8px; background:transparent; color:#d70015; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600;">{{ settingsProjectDeleteLabel }}</button>
+                      </sc-if>
+                      <div style="display:flex; gap:8px; margin-left:auto;">
+                        <button onClick="{{ onCancelSettingsProjectEdit }}" style="height:30px; padding:0 14px; border:1px solid rgba(0,0,0,0.12); border-radius:8px; background:rgba(255,255,255,0.66); color:#1d1d1f; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:500;">Cancel</button>
+                        <button onClick="{{ onSaveSettingsProject }}" style="height:30px; padding:0 16px; border:none; border-radius:8px; background:#0a84ff; color:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600;">Save Project</button>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+                <div style="min-width:0; overflow:hidden; border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6);">
+                  <div style="display:flex; align-items:center; justify-content:space-between; height:36px; padding:0 14px; border-bottom:1px solid rgba(0,0,0,0.08);">
+                    <span style="font-size:12.5px; font-weight:700; color:#1d1d1f;">Projects</span>
+                    <span style="font-size:11.5px; color:rgba(0,0,0,0.46);">{{ projectCount }} total</span>
+                  </div>
+                  <sc-for list="{{ settingsProjects }}" as="p" hint-placeholder-count="5">
+                    <div style="display:flex; align-items:center; gap:10px; min-height:46px; padding:8px 12px; border-bottom:{{ p.border }};">
+                      <span style="width:10px; height:10px; border-radius:3px; flex:none; background:{{ p.color }};"></span>
+                      <span style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;">
+                        <span style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#1d1d1f;">{{ p.name }}</span>
+                        <span style="font-size:11px; color:rgba(0,0,0,0.48);">{{ p.taskCount }} tasks</span>
+                      </span>
+                      <button onClick="{{ p.onEdit }}" title="Edit project" style="width:28px; height:28px; border:none; border-radius:8px; background:rgba(0,0,0,0.05); cursor:pointer; color:rgba(0,0,0,0.58); display:flex; align-items:center; justify-content:center;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                      </button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ settingsPageTasks }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:18px;">
+                <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
+                  <span style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-size:28px; line-height:1.1; font-weight:700; letter-spacing:-0.03em; color:#1d1d1f;">Tasks</span>
+                    <span style="font-size:13px; line-height:1.45; color:rgba(0,0,0,0.54);">Manage reusable task shortcuts.</span>
+                  </span>
+                  <button onClick="{{ onNewSettingsTask }}" style="height:28px; padding:0 11px; border:none; border-radius:8px; background:rgba(10,132,255,0.14); color:#0067d8; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;">New Task</button>
+                </div>
+                <sc-if value="{{ settingsTaskEditing }}" hint-placeholder-val="{{ false }}">
+                  <div style="border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6); padding:16px;">
+                    <div style="margin-bottom:14px;">
+                      <span style="font-size:17px; font-weight:600; color:#1d1d1f;">{{ settingsTaskEditorTitle }}</span>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                      <label style="display:flex; flex-direction:column; gap:6px; font-size:12px; font-weight:600; color:rgba(0,0,0,0.56);">Name<input value="{{ settingsTaskName }}" onInput="{{ onSettingsTaskName }}" style="height:36px; padding:0 11px; border:1px solid rgba(0,0,0,0.12); border-radius:9px; background:rgba(255,255,255,0.8); font-family:inherit; font-size:13px; font-weight:600; color:#1d1d1f; outline:none;" /></label>
+                      <label style="display:flex; flex-direction:column; gap:6px; font-size:12px; font-weight:600; color:rgba(0,0,0,0.56);">Kind<input value="{{ settingsTaskKind }}" onInput="{{ onSettingsTaskKind }}" style="height:36px; padding:0 11px; border:1px solid rgba(0,0,0,0.12); border-radius:9px; background:rgba(255,255,255,0.8); font-family:inherit; font-size:13px; font-weight:600; color:#1d1d1f; outline:none;" /></label>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:12px; font-size:12px; font-weight:600; color:rgba(0,0,0,0.56);">
+                      Project
+                      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <button onClick="{{ onSettingsTaskProjectGlobal }}" style="height:28px; padding:0 10px; border:none; border-radius:8px; background:{{ settingsTaskGlobalBg }}; color:{{ settingsTaskGlobalColor }}; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;">Global</button>
+                        <sc-for list="{{ settingsTaskProjectOptions }}" as="opt" hint-placeholder-count="5">
+                          <button onClick="{{ opt.onPick }}" style="height:28px; padding:0 10px; border:none; border-radius:8px; background:{{ opt.bg }}; color:{{ opt.color }}; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;">{{ opt.name }}</button>
+                        </sc-for>
+                      </div>
+                    </div>
+                    <sc-if value="{{ settingsTaskDeleteConfirm }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:14px; padding:12px; border-radius:10px; background:rgba(255,59,48,0.09); border:1px solid rgba(255,59,48,0.18);">
+                        <div style="font-size:13px; font-weight:700; color:#b00020;">Delete this task?</div>
+                        <div style="font-size:12px; line-height:1.4; color:rgba(0,0,0,0.54); margin-top:3px;">Existing time entries stay intact; this removes only the saved task shortcut.</div>
+                      </div>
+                    </sc-if>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:16px;">
+                      <sc-if value="{{ settingsTaskCanDelete }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ onDeleteSettingsTask }}" style="height:30px; padding:0 12px; border:1px solid rgba(0,0,0,0.12); border-radius:8px; background:transparent; color:#d70015; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600;">{{ settingsTaskDeleteLabel }}</button>
+                      </sc-if>
+                      <div style="display:flex; gap:8px; margin-left:auto;">
+                        <button onClick="{{ onCancelSettingsTaskEdit }}" style="height:30px; padding:0 14px; border:1px solid rgba(0,0,0,0.12); border-radius:8px; background:rgba(255,255,255,0.66); color:#1d1d1f; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:500;">Cancel</button>
+                        <button onClick="{{ onSaveSettingsTask }}" style="height:30px; padding:0 16px; border:none; border-radius:8px; background:#0a84ff; color:#fff; cursor:pointer; font-family:inherit; font-size:12.5px; font-weight:600;">Save Task</button>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+                <div style="min-width:0; overflow:hidden; border-radius:12px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.6);">
+                  <div style="display:flex; align-items:center; justify-content:space-between; height:36px; padding:0 14px; border-bottom:1px solid rgba(0,0,0,0.08);">
+                    <span style="font-size:12.5px; font-weight:700; color:#1d1d1f;">Tasks</span>
+                    <span style="font-size:11.5px; color:rgba(0,0,0,0.46);">{{ taskCount }} total</span>
+                  </div>
+                  <sc-for list="{{ settingsTasks }}" as="task" hint-placeholder-count="6">
+                    <div style="display:flex; align-items:center; gap:10px; min-height:46px; padding:8px 12px; border-bottom:{{ task.border }};">
+                      <span style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;">
+                        <span style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#1d1d1f;">{{ task.name }}</span>
+                        <span style="font-size:11px; color:rgba(0,0,0,0.48); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ task.scope }}</span>
+                      </span>
+                      <button onClick="{{ task.onEdit }}" title="Edit task" style="width:28px; height:28px; border:none; border-radius:8px; background:rgba(0,0,0,0.05); cursor:pointer; color:rgba(0,0,0,0.58); display:flex; align-items:center; justify-content:center;">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
+                      </button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:760},&quot;frame&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;macosPreview&quot;,&quot;none&quot;],&quot;default&quot;:&quot;macosPreview&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;platform&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;macos&quot;,&quot;windows&quot;,&quot;gnome&quot;,&quot;kde&quot;],&quot;default&quot;:&quot;macos&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;blue&quot;,&quot;purple&quot;,&quot;pink&quot;,&quot;red&quot;,&quot;orange&quot;,&quot;yellow&quot;,&quot;green&quot;,&quot;graphite&quot;],&quot;default&quot;:&quot;blue&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;start&quot;,&quot;settings&quot;,&quot;newEntry&quot;,&quot;newProject&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;track&quot;,&quot;focus&quot;],&quot;default&quot;:&quot;track&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;running&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;trayId&quot;:{&quot;editor&quot;:null,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const projects = [
+      { id:'acme', name:'Acme Website', client:'Acme Inc', color:'#0a84ff' },
+      { id:'internal', name:'Internal', client:'—', color:'#8e8e93' },
+      { id:'mobile', name:'Mobile App', client:'Acme Inc', color:'#bf5af2' },
+      { id:'brand', name:'Brand Refresh', client:'Nimbus Co', color:'#ff9f0a' },
+      { id:'docs', name:'Docs Portal', client:'Nimbus Co', color:'#30d158' }
+    ];
+    const tasks = [
+      { name:'Build component library', kind:'Development', projectId:'acme' },
+      { name:'Design review', kind:'Review', projectId:'acme' },
+      { name:'Bug triage', kind:'Support', projectId:'mobile' },
+      { name:'Standup', kind:'Meeting' },
+      { name:'Frontend Programming', kind:'Development', projectId:'acme' },
+      { name:'Web Design', kind:'Design', projectId:'brand' },
+      { name:'Magazine Design', kind:'Design', projectId:'brand' },
+      { name:'Presentations', kind:'Client work' },
+      { name:'Documentation pass', kind:'Writing', projectId:'docs' }
+    ];
+    const initScreen = props.screen || 'home';
+    const initMode = props.mode || 'track';
+    const initFrame = props.frame || 'macosPreview';
+    const initRunning = props.running===true || props.running==='true' || (initFrame !== 'none' && props.running!==false && props.running!=='false');
+    const startMode = initScreen==='start' ? (props.mode==='focus'?'focus':'track') : 'track';
+    this.state = {
+      stack: initScreen==='home' ? ['home'] : ['home', initScreen],
+      navDir: 'push', navAnim:false,
+      previewPopoverOpen:true,
+      settingsWindowOpen:false,
+      settingsPage:'general',
+      startMode,
+      mode: initMode,
+      running: initRunning,
+      paused: false,
+      elapsed: initRunning && initMode==='track' ? 5058 : 0,
+      focusRemaining: initRunning && initMode==='focus' ? 1122 : 25*60,
+      focusTotal: 25*60,
+      focusRound: 2,
+      selectedDayIndex: 4,
+      activeProjectId: 'acme',
+      activeTask: initMode==='focus' ? 'Design review' : 'Build component library',
+      selectedProjectId: 'acme',
+      selTask: 'Build component library',
+      pickerOpen: false, pickerSearch: '',
+      timerModalOpen:false, timerFocusEnabled:false, modalProjectOpen:false, modalTaskOpen:false,
+      modalProjectInput:'Acme Website', modalTaskInput:'Build component library',
+      entryEditOpen:false, editEntryId:null, editProjectInput:'', editTaskInput:'', editHours:0, editMinutes:0, editNote:'',
+      editProjectOpen:false, editTaskOpen:false, swipedEntryId:null, swipeStartX:null,
+      settingsProjectEditId:null, settingsProjectName:'', settingsProjectClient:'', settingsProjectColor:'#0a84ff', settingsProjectDeleteConfirm:false,
+      settingsTaskEditIndex:null, settingsTaskOriginalName:'', settingsTaskOriginalProjectId:'', settingsTaskName:'', settingsTaskKind:'', settingsTaskProjectId:'', settingsTaskDeleteConfirm:false,
+      projects,
+      tasks,
+      entries: [
+        { id:'e1', projectId:'acme', task:'Design review', seconds:4350, note:'' },
+        { id:'e2', projectId:'acme', task:'Build component library', seconds:5400, note:'Polish shared controls' },
+        { id:'e3', projectId:'internal', task:'Standup', seconds:1500, note:'' },
+        { id:'e4', projectId:'mobile', task:'Bug triage', seconds:2700, note:'' }
+      ],
+      week: [
+        { label:'M', title:'Monday, 17 Jun', entries:[] },
+        { label:'T', title:'Tuesday, 18 Jun', entries:[] },
+        { label:'W', title:'Wednesday, 19 Jun', entries:[] },
+        { label:'T', title:'Yesterday, 20 Jun', entries:[
+          { id:'y1', projectId:'brand', task:'Web Design', seconds:3600, note:'' },
+          { id:'y2', projectId:'docs', task:'Documentation pass', seconds:2400, note:'Update screenshots' }
+        ] },
+        { label:'F', title:'Today, 21 Jun', isToday:true },
+        { label:'S', title:'Saturday, 22 Jun', entries:[] },
+        { label:'S', title:'Sunday, 23 Jun', entries:[] }
+      ],
+      settings: { focusLen:25, shortBreak:5, breakEvery:1, longBreak:15, rounds:4, idle:true, launch:false, appearance:'system' },
+      formTask:'', formHr:1, formMin:0, formNotes:'',
+      npName:'', npClient:'', npColor:'#0a84ff', npBillable:false, npRate:''
+    };
+    this._timer = null;
+  }
+  componentDidMount(){ if(this.state.running) this.startTimer(); this.updateTray(); }
+  componentDidUpdate(){ this.updateTray(); }
+  componentWillUnmount(){ if(this._timer) clearInterval(this._timer); if(this._navT) clearTimeout(this._navT); }
+
+  updateTray(){
+    const id = this.props.trayId || (((this.props.frame || 'macosPreview') !== 'none') ? 'preview-tray' : ''); if(!id) return;
+    try {
+      const running = this.state.running;
+      const str = this.state.mode==='track' ? this.fmt(this.state.elapsed) : this.fmt(this.state.focusRemaining);
+      const timeEl = document.getElementById(id+'-time');
+      const recEl = document.getElementById(id+'-rec');
+      if(timeEl) timeEl.textContent = running ? str : '';
+      if(recEl) recEl.style.opacity = running ? '1' : '0';
+    } catch(e){}
+  }
+
+  tokens(){
+    const p = this.props.platform || 'macos';
+    const dark = (this.props.theme || 'light') === 'dark';
+    const common = { width:'470px', popH:'640px', ease:'cubic-bezier(0.32,0.72,0,1)' };
+    const T = {};
+    if(p==='macos'){
+      const macAcc={blue:'#0a84ff',purple:'#bf5af2',pink:'#ff375f',red:'#ff453a',orange:'#ff9500',yellow:'#ffd60a',green:'#34c759',graphite:'#8e8e93'};
+      const acc=macAcc[this.props.accent]||macAcc.blue;
+      const accFg=(this.props.accent==='yellow'||this.props.accent==='graphite')?'#000000':'#ffffff';
+      Object.assign(T, { font:'-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif',
+        radius:'18px', radiusSm:'10px', radiusCtrl:'10px', accent:acc, accentFg:accFg, titleJustify:'center', headbar:'34px', sheetTop:'0px' });
+      if(dark) Object.assign(T,{ material:'rgba(28,29,34,0.58)', rowSurface:'#1c1d22', blur:'blur(42px) saturate(190%)', sheetMaterial:'rgba(40,42,48,0.74)', sheetBlur:'blur(60px) saturate(190%)', card:'rgba(52,54,62,0.54)', input:'rgba(255,255,255,0.08)', inputBorder:'1px solid rgba(255,255,255,0.13)', popmenu:'rgba(48,50,58,0.82)', footer:'rgba(255,255,255,0.045)', fg1:'rgba(255,255,255,0.96)', fg2:'rgba(255,255,255,0.62)', fg3:'rgba(255,255,255,0.42)', separator:'rgba(255,255,255,0.12)', hover:'rgba(255,255,255,0.1)', segTrack:'rgba(255,255,255,0.08)', segThumb:'rgba(255,255,255,0.2)', ringTrack:'rgba(255,255,255,0.12)', danger:'#ff453a', accentRing:this.hexToRgba(acc,0.32), accentFill:this.hexToRgba(acc,0.1), cardRim:'rgba(255,255,255,0.16)', glassBorder:'1px solid rgba(255,255,255,0.2)', shadow:'inset 0 1px 0 rgba(255,255,255,0.18), 0 24px 60px rgba(0,0,0,0.46), 0 0 0 0.5px rgba(0,0,0,0.3)' });
+      else Object.assign(T,{ material:'rgba(246,248,252,0.58)', rowSurface:'#f6f8fc', blur:'blur(42px) saturate(190%)', sheetMaterial:'rgba(252,252,255,0.7)', sheetBlur:'blur(60px) saturate(190%)', card:'rgba(255,255,255,0.56)', input:'rgba(255,255,255,0.44)', inputBorder:'1px solid rgba(255,255,255,0.64)', popmenu:'rgba(255,255,255,0.78)', footer:'rgba(255,255,255,0.34)', fg1:'#1d1d1f', fg2:'rgba(0,0,0,0.58)', fg3:'rgba(0,0,0,0.38)', separator:'rgba(0,0,0,0.1)', hover:'rgba(255,255,255,0.54)', segTrack:'rgba(255,255,255,0.34)', segThumb:'rgba(255,255,255,0.72)', ringTrack:'rgba(0,0,0,0.1)', danger:'#ff3b30', accentRing:this.hexToRgba(acc,0.22), accentFill:this.hexToRgba(acc,0.07), cardRim:'rgba(255,255,255,0.72)', glassBorder:'1px solid rgba(255,255,255,0.72)', shadow:'inset 0 1px 0 rgba(255,255,255,0.78), 0 22px 58px rgba(38,54,90,0.24), 0 0 0 0.5px rgba(0,0,0,0.08)' });
+    } else if(p==='windows'){
+      Object.assign(T, { font:'"Segoe UI Variable","Segoe UI",system-ui,sans-serif', radius:'8px', radiusSm:'5px', radiusCtrl:'5px', accentFg:'#ffffff', titleJustify:'flex-start', headbar:'46px' });
+      if(dark) Object.assign(T,{ material:'rgba(43,43,43,0.86)', rowSurface:'#2b2b2b', blur:'blur(40px) saturate(160%)', accent:'#60cdff', accentFg:'#000000', card:'rgba(255,255,255,0.045)', input:'rgba(255,255,255,0.06)', inputBorder:'1px solid rgba(255,255,255,0.09)', popmenu:'rgba(50,50,50,0.92)', footer:'rgba(255,255,255,0.02)', fg1:'#ffffff', fg2:'rgba(255,255,255,0.6)', fg3:'rgba(255,255,255,0.44)', separator:'rgba(255,255,255,0.08)', hover:'rgba(255,255,255,0.06)', segTrack:'rgba(255,255,255,0.05)', segThumb:'#60cdff', ringTrack:'rgba(255,255,255,0.12)', danger:'#ff99a4', accentRing:'rgba(96,205,255,0.3)', shadow:'0 10px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.07)' });
+      else Object.assign(T,{ material:'rgba(243,243,243,0.88)', rowSurface:'#f3f3f3', blur:'blur(40px) saturate(150%)', accent:'#005fb8', card:'#ffffff', input:'#fbfbfb', inputBorder:'1px solid rgba(0,0,0,0.1)', popmenu:'rgba(249,249,249,0.95)', footer:'rgba(0,0,0,0.015)', fg1:'#1a1a1a', fg2:'rgba(0,0,0,0.62)', fg3:'rgba(0,0,0,0.46)', separator:'rgba(0,0,0,0.07)', hover:'rgba(0,0,0,0.04)', segTrack:'rgba(0,0,0,0.045)', segThumb:'#005fb8', ringTrack:'rgba(0,0,0,0.1)', danger:'#c42b1c', accentRing:'rgba(0,95,184,0.25)', shadow:'0 10px 30px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05)' });
+    } else if(p==='gnome'){
+      Object.assign(T, { font:'"Cantarell","Noto Sans",system-ui,sans-serif', radius:'12px', radiusSm:'9px', radiusCtrl:'9px', accentFg:'#ffffff', titleJustify:'center', headbar:'46px' });
+      if(dark) Object.assign(T,{ material:'#2d2d2d', rowSurface:'#2d2d2d', blur:'none', accent:'#78aeed', accentFg:'#000000', card:'rgba(255,255,255,0.05)', input:'rgba(255,255,255,0.08)', inputBorder:'1px solid rgba(255,255,255,0.08)', popmenu:'#383838', footer:'rgba(255,255,255,0.02)', fg1:'#ffffff', fg2:'rgba(255,255,255,0.7)', fg3:'rgba(255,255,255,0.5)', separator:'rgba(255,255,255,0.1)', hover:'rgba(255,255,255,0.07)', segTrack:'rgba(255,255,255,0.07)', segThumb:'rgba(120,174,237,0.28)', ringTrack:'rgba(255,255,255,0.13)', danger:'#ff7b63', accentRing:'rgba(120,174,237,0.35)', shadow:'0 12px 38px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.4)' });
+      else Object.assign(T,{ material:'#ffffff', rowSurface:'#ffffff', blur:'none', accent:'#3584e4', card:'#ffffff', input:'#ffffff', inputBorder:'1px solid rgba(0,0,0,0.13)', popmenu:'#ffffff', footer:'rgba(0,0,0,0.015)', fg1:'rgba(0,0,0,0.9)', fg2:'rgba(0,0,0,0.55)', fg3:'rgba(0,0,0,0.4)', separator:'rgba(0,0,0,0.08)', hover:'rgba(0,0,0,0.045)', segTrack:'rgba(0,0,0,0.05)', segThumb:'rgba(53,132,228,0.16)', ringTrack:'rgba(0,0,0,0.1)', danger:'#e01b24', accentRing:'rgba(53,132,228,0.25)', shadow:'0 12px 36px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.08)' });
+    } else {
+      Object.assign(T, { font:'"Noto Sans",system-ui,sans-serif', radius:'6px', radiusSm:'4px', radiusCtrl:'4px', accent:'#3daee9', accentFg:'#ffffff', titleJustify:'center', headbar:'42px', width:'450px', popH:'626px' });
+      if(dark) Object.assign(T,{ material:'#2a2e32', rowSurface:'#2a2e32', blur:'none', card:'#31363b', input:'#232629', inputBorder:'1px solid #4d5258', popmenu:'#31363b', footer:'rgba(255,255,255,0.02)', fg1:'#fcfcfc', fg2:'#c5c8ca', fg3:'#8a8e91', separator:'rgba(255,255,255,0.1)', hover:'rgba(255,255,255,0.07)', segTrack:'#232629', segThumb:'#3daee9', ringTrack:'rgba(255,255,255,0.12)', danger:'#da4453', accentRing:'rgba(61,174,233,0.35)', shadow:'0 10px 30px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.5)' });
+      else Object.assign(T,{ material:'#eff0f1', rowSurface:'#eff0f1', blur:'none', card:'#fcfcfc', input:'#ffffff', inputBorder:'1px solid #bcc1c4', popmenu:'#fcfcfc', footer:'rgba(0,0,0,0.02)', fg1:'#232627', fg2:'#4d4d4d', fg3:'#7f8284', separator:'rgba(0,0,0,0.1)', hover:'rgba(0,0,0,0.05)', segTrack:'#e3e5e7', segThumb:'#3daee9', ringTrack:'rgba(0,0,0,0.1)', danger:'#da4453', accentRing:'rgba(61,174,233,0.3)', shadow:'0 10px 28px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.15)' });
+    }
+    return Object.assign({}, common, T);
+  }
+
+  rootStyle(){
+    const t = this.tokens();
+    const m = {
+      '--c-width': t.width, '--c-pop-h': t.popH, '--c-font': t.font, '--c-ease': t.ease,
+      '--c-radius': t.radius, '--c-radius-sm': t.radiusSm, '--c-radius-ctrl': t.radiusCtrl,
+      '--c-material': t.material, '--c-row-surface': t.rowSurface || t.material, '--c-blur': t.blur, '--c-card': t.card, '--c-input': t.input,
+      '--c-input-border': t.inputBorder, '--c-popmenu': t.popmenu, '--c-footer-bg': t.footer,
+      '--c-fg1': t.fg1, '--c-fg2': t.fg2, '--c-fg3': t.fg3,
+      '--c-separator': t.separator, '--c-hover': t.hover, '--c-seg-track': t.segTrack,
+      '--c-accent': t.accent, '--c-accent-fg': t.accentFg, '--c-accent-ring': t.accentRing,
+      '--c-ring': t.accent, '--c-ring-track': t.ringTrack, '--c-danger': t.danger,
+      '--c-title-justify': t.titleJustify, '--c-headbar-h': t.headbar,
+      '--c-glass-border': t.glassBorder || t.inputBorder || ('1px solid '+t.separator),
+      '--c-sheet-material': t.sheetMaterial || t.card,
+      '--c-sheet-blur': t.sheetBlur || t.blur,
+      '--c-card-rim': t.cardRim || 'transparent',
+      '--c-sheet-top': t.sheetTop || 'var(--c-headbar-h)',
+      '--c-accent-fill': t.accentFill || t.accentRing
+    };
+    return Object.keys(m).map(k=>k+':'+m[k]).join('; ');
+  }
+
+  fmt(s){ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60), sec=s%60; const mm=String(m).padStart(2,'0'), ss=String(sec).padStart(2,'0'); return h>0 ? h+':'+mm+':'+ss : m+':'+ss; }
+  fmtDuration(s){ s=Math.max(0,Math.round(s)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h+':'+String(m).padStart(2,'0'); }
+  fmtShort(s){ const h=Math.floor(s/3600), m=Math.floor(s%3600/60); if(h>0) return h+'h '+(m>0?m+'m':'').trim(); return m+'m'; }
+  fmtHours(h){ const hh=Math.floor(h), mm=String(Math.round((h-hh)*60)).padStart(2,'0'); return hh+':'+mm; }
+  hexToRgba(hex,a){ const h=(hex||'#0a84ff').replace('#',''); const r=parseInt(h.substring(0,2),16), g=parseInt(h.substring(2,4),16), b=parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+  tc(text){ const p=this.props.platform||'macos'; if(p==='windows'||p==='kde'||!text) return text; const small={a:1,an:1,the:1,and:1,or:1,for:1,to:1,of:1,in:1,on:1,at:1,by:1,with:1,per:1,from:1}; return String(text).split(' ').map((w,i)=>{ const lw=w.toLowerCase(); if(i>0 && small[lw]) return lw; return w.charAt(0).toUpperCase()+w.slice(1); }).join(' '); }
+  curScreen(){ const st=this.state.stack; return st[st.length-1]; }
+  proj(id){ return this.state.projects.find(p=>p.id===id) || this.state.projects[0]; }
+  makeEntry(projectId, task, seconds, note){
+    return { id:'entry-'+Date.now()+'-'+Math.round(Math.random()*10000), projectId, task:task||'Untitled', seconds, note:note||'' };
+  }
+
+  triggerNavAnim(){ this.setState({ navAnim:true }); if(this._navT) clearTimeout(this._navT); this._navT = setTimeout(()=>this.setState({ navAnim:false }), 300); }
+  push(s, dir){ this.setState({ stack:[...this.state.stack, s], navDir:dir||'push', pickerOpen:false }); this.triggerNavAnim(); }
+  pop(){ if(this.state.stack.length>1){ this.setState({ stack:this.state.stack.slice(0,-1), navDir:'pop', pickerOpen:false }); this.triggerNavAnim(); } }
+
+  startTimer(){
+    if(this._timer) clearInterval(this._timer);
+    this._timer = setInterval(()=>{
+      if(this.state.paused || !this.state.running) return;
+      if(this.state.mode==='track') this.setState(s=>({ elapsed:s.elapsed+1 }));
+      else this.setState(s=>({ focusRemaining: Math.max(0, s.focusRemaining-1) }));
+    }, 1000);
+  }
+  startSession(pid, task, mode){
+    let entries = this.state.entries;
+    if(this.state.running){
+      const secs = this.state.mode==='track' ? this.state.elapsed : (this.state.focusTotal - this.state.focusRemaining);
+      if(secs>=30) entries = [this.makeEntry(this.state.activeProjectId, this.state.activeTask, secs), ...entries];
+    }
+    if(this._timer){ clearInterval(this._timer); this._timer=null; }
+    const focusTotal = this.state.settings.focusLen * 60;
+    this.setState({ entries, activeProjectId:pid, activeTask:task||'Untitled', mode, running:true, paused:false,
+      elapsed:0, focusTotal, focusRemaining:focusTotal, focusRound: mode==='focus'?1:this.state.focusRound, stack:['home'], pickerOpen:false });
+    this.startTimer();
+  }
+  onPause(){ this.setState(s=>({ paused:!s.paused })); }
+  onSkip(){ this.setState(s=>({ focusRound:Math.min(s.settings.rounds, s.focusRound+1), focusRemaining:s.focusTotal, paused:false })); }
+  onStop(){
+    if(this._timer){ clearInterval(this._timer); this._timer=null; }
+    const secs = this.state.mode==='track' ? this.state.elapsed : (this.state.focusTotal - this.state.focusRemaining);
+    let entries = this.state.entries;
+    if(secs>=30) entries = [this.makeEntry(this.state.activeProjectId, this.state.activeTask, secs), ...entries];
+    this.setState({ running:false, paused:false, elapsed:0, focusRemaining:this.state.focusTotal, entries });
+  }
+
+  entryById(id){
+    const today = this.state.entries.find(e=>e.id===id);
+    if(today) return today;
+    for(const day of this.state.week){
+      const found = (day.entries || []).find(e=>e.id===id);
+      if(found) return found;
+    }
+    return null;
+  }
+
+  openEditEntry(entry){
+    const project = this.proj(entry.projectId);
+    const minutes = Math.floor((entry.seconds % 3600) / 60);
+    this.setState({
+      entryEditOpen:true,
+      editEntryId:entry.id,
+      editProjectInput:project.name,
+      editTaskInput:entry.task || 'Untitled',
+      editHours:Math.floor(entry.seconds / 3600),
+      editMinutes:minutes,
+      editNote:entry.note || '',
+      swipedEntryId:null
+    });
+  }
+
+  updateEntry(id, patch){
+    this.setState(st=>({
+      entries: st.entries.map(e=>e.id===id ? Object.assign({}, e, patch) : e),
+      week: st.week.map(d=>d.entries ? Object.assign({}, d, { entries:d.entries.map(e=>e.id===id ? Object.assign({}, e, patch) : e) }) : d),
+      entryEditOpen:false,
+      editEntryId:null,
+      swipedEntryId:null
+    }));
+  }
+
+  deleteEntry(id){
+    this.setState(st=>({
+      entries: st.entries.filter(e=>e.id!==id),
+      week: st.week.map(d=>d.entries ? Object.assign({}, d, { entries:d.entries.filter(e=>e.id!==id) }) : d),
+      entryEditOpen:false,
+      editEntryId:null,
+      swipedEntryId:null
+    }));
+  }
+
+  openSettingsProject(project){
+    this.setState({
+      settingsProjectEditId:project ? project.id : '__new__',
+      settingsProjectName:project ? project.name : '',
+      settingsProjectClient:project ? project.client : '',
+      settingsProjectColor:project ? project.color : '#0a84ff',
+      settingsProjectDeleteConfirm:false
+    });
+  }
+
+  cancelSettingsProjectEdit(){
+    this.setState({ settingsProjectEditId:null, settingsProjectName:'', settingsProjectClient:'', settingsProjectColor:'#0a84ff', settingsProjectDeleteConfirm:false });
+  }
+
+  saveSettingsProject(){
+    const name = (this.state.settingsProjectName || '').trim();
+    if(!name) return;
+    const client = (this.state.settingsProjectClient || '').trim() || '—';
+    const color = this.state.settingsProjectColor || '#0a84ff';
+    if(this.state.settingsProjectEditId && this.state.settingsProjectEditId !== '__new__'){
+      this.setState(st=>({
+        projects:st.projects.map(p=>p.id===st.settingsProjectEditId ? Object.assign({}, p, { name, client, color }) : p),
+        settingsProjectEditId:null,
+        settingsProjectName:'',
+        settingsProjectClient:'',
+        settingsProjectColor:'#0a84ff',
+        settingsProjectDeleteConfirm:false
+      }));
+    } else {
+      const id = 'p'+Date.now();
+      this.setState(st=>({
+        projects:[...st.projects, { id, name, client, color }],
+        selectedProjectId:id,
+        settingsProjectEditId:null,
+        settingsProjectName:'',
+        settingsProjectClient:'',
+        settingsProjectColor:'#0a84ff',
+        settingsProjectDeleteConfirm:false
+      }));
+    }
+  }
+
+  deleteSettingsProject(){
+    const id = this.state.settingsProjectEditId;
+    if(!id) return this.cancelSettingsProjectEdit();
+    if(id==='__new__') return this.cancelSettingsProjectEdit();
+    if(!this.state.settingsProjectDeleteConfirm) return this.setState({ settingsProjectDeleteConfirm:true });
+    const remaining = this.state.projects.filter(p=>p.id!==id);
+    if(!remaining.length) return;
+    const fallbackId = remaining[0].id;
+    this.setState(st=>({
+      projects:remaining,
+      tasks:st.tasks.filter(task=>task.projectId!==id),
+      entries:st.entries.map(e=>e.projectId===id ? Object.assign({}, e, { projectId:fallbackId }) : e),
+      week:st.week.map(d=>d.entries ? Object.assign({}, d, { entries:d.entries.map(e=>e.projectId===id ? Object.assign({}, e, { projectId:fallbackId }) : e) }) : d),
+      selectedProjectId:st.selectedProjectId===id ? fallbackId : st.selectedProjectId,
+      activeProjectId:st.activeProjectId===id ? fallbackId : st.activeProjectId,
+      modalProjectInput:st.selectedProjectId===id ? remaining[0].name : st.modalProjectInput,
+      settingsProjectEditId:null,
+      settingsProjectName:'',
+      settingsProjectClient:'',
+      settingsProjectColor:'#0a84ff',
+      settingsProjectDeleteConfirm:false
+    }));
+  }
+
+  openSettingsTask(task, index){
+    this.setState({
+      settingsTaskEditIndex:task ? index : -1,
+      settingsTaskOriginalName:task ? task.name : '',
+      settingsTaskOriginalProjectId:task && task.projectId ? task.projectId : '',
+      settingsTaskName:task ? task.name : '',
+      settingsTaskKind:task ? task.kind : '',
+      settingsTaskProjectId:task && task.projectId ? task.projectId : '',
+      settingsTaskDeleteConfirm:false
+    });
+  }
+
+  cancelSettingsTaskEdit(){
+    this.setState({ settingsTaskEditIndex:null, settingsTaskOriginalName:'', settingsTaskOriginalProjectId:'', settingsTaskName:'', settingsTaskKind:'', settingsTaskProjectId:'', settingsTaskDeleteConfirm:false });
+  }
+
+  taskMatchesOriginal(entry){
+    return entry.task===this.state.settingsTaskOriginalName && entry.projectId===this.state.settingsTaskOriginalProjectId;
+  }
+
+  saveSettingsTask(){
+    const name = (this.state.settingsTaskName || '').trim();
+    if(!name) return;
+    const kind = (this.state.settingsTaskKind || '').trim() || 'Task';
+    const projectId = this.state.settingsTaskProjectId || undefined;
+    const nextTask = projectId ? { name, kind, projectId } : { name, kind };
+    const editing = this.state.settingsTaskEditIndex !== null && this.state.settingsTaskEditIndex >= 0;
+    this.setState(st=>{
+      const tasks = editing ? st.tasks.map((task,i)=>i===st.settingsTaskEditIndex ? nextTask : task) : [...st.tasks, nextTask];
+      const shouldCascade = editing && st.settingsTaskOriginalName;
+      const sameOldTask = e=>e.task===st.settingsTaskOriginalName && e.projectId===(st.settingsTaskOriginalProjectId || undefined);
+      return {
+        tasks,
+        entries: shouldCascade ? st.entries.map(e=>sameOldTask(e) ? Object.assign({}, e, { task:name, projectId:projectId || e.projectId }) : e) : st.entries,
+        week: shouldCascade ? st.week.map(d=>d.entries ? Object.assign({}, d, { entries:d.entries.map(e=>sameOldTask(e) ? Object.assign({}, e, { task:name, projectId:projectId || e.projectId }) : e) }) : d) : st.week,
+        activeTask: shouldCascade && st.activeTask===st.settingsTaskOriginalName && st.activeProjectId===(st.settingsTaskOriginalProjectId || undefined) ? name : st.activeTask,
+        selTask: shouldCascade && st.selTask===st.settingsTaskOriginalName ? name : st.selTask,
+        modalTaskInput: shouldCascade && st.modalTaskInput===st.settingsTaskOriginalName ? name : st.modalTaskInput,
+        settingsTaskEditIndex:null,
+        settingsTaskOriginalName:'',
+        settingsTaskOriginalProjectId:'',
+        settingsTaskName:'',
+        settingsTaskKind:'',
+        settingsTaskProjectId:'',
+        settingsTaskDeleteConfirm:false
+      };
+    });
+  }
+
+  deleteSettingsTask(){
+    if(this.state.settingsTaskEditIndex === null || this.state.settingsTaskEditIndex < 0) return this.cancelSettingsTaskEdit();
+    if(!this.state.settingsTaskDeleteConfirm) return this.setState({ settingsTaskDeleteConfirm:true });
+    this.setState(st=>({
+      tasks:st.tasks.filter((task,i)=>i!==st.settingsTaskEditIndex),
+      settingsTaskEditIndex:null,
+      settingsTaskOriginalName:'',
+      settingsTaskOriginalProjectId:'',
+      settingsTaskName:'',
+      settingsTaskKind:'',
+      settingsTaskProjectId:'',
+      settingsTaskDeleteConfirm:false
+    }));
+  }
+
+  entryRows(entries, t, allowActive){
+    return entries
+      .slice()
+      .sort((a,b)=>(a.task||'Untitled').localeCompare(b.task||'Untitled') || this.proj(a.projectId).name.localeCompare(this.proj(b.projectId).name))
+      .map(e=>{
+        const proj = this.proj(e.projectId);
+        const task = e.task || 'Untitled';
+        const isActive = !!allowActive && this.state.running && e.projectId===this.state.activeProjectId && task===this.state.activeTask;
+        return {
+          id:e.id, task, project:proj.name, note:e.note || '', hasNote:!!(e.note && e.note.trim()), color:proj.color,
+          colorOpacity:'0.85',
+          dur:this.fmtDuration(e.seconds),
+          isActive, notActive:!isActive,
+          rowBg:'var(--c-row-surface)',
+          btnBg: isActive ? 'transparent' : 'transparent',
+          btnColor: isActive ? t.accent : t.fg3,
+          btnBorder: isActive ? t.accent : t.separator,
+          actionTitle: isActive ? 'Stop' : 'Start',
+          onEdit:()=>this.openEditEntry(e),
+          onContextMenu:(ev)=>{ if(ev && ev.preventDefault) ev.preventDefault(); this.openEditEntry(e); },
+          onToggle:(ev)=>{ if(ev && ev.stopPropagation) ev.stopPropagation(); if(this.state.running && e.projectId===this.state.activeProjectId && task===this.state.activeTask) this.onStop(); else this.startSession(e.projectId, task, 'track'); }
+        };
+      });
+  }
+  groupedEntries(t){ return this.entryRows(this.state.entries, t, true); }
+
+  renderVals(){
+    const t = this.tokens();
+    const s = this.state;
+    const dark = (this.props.theme||'light')==='dark';
+    const screen = this.curScreen();
+    const isHome = screen==='home';
+    const navOffset = s.navDir==='pop' ? '-18px' : '18px';
+    const titleMap = { home:'Tracker', start: s.startMode==='focus'?'Focus session':'New timer', settings:'Settings', newEntry:'Log time', newProject:'New project' };
+    const actionMap = { settings:'Done', newEntry:'Save', newProject:'Add' };
+    const hasAction = !!actionMap[screen];
+
+    const activeProj = this.proj(s.activeProjectId);
+    const selP = this.proj(s.selectedProjectId);
+
+    // status (header)
+    let statusLabel='Idle', statusColor=t.fg3, statusDot=t.fg3, statusGlow='none', dotAnim='none';
+    if(s.running && !s.paused){ statusLabel = s.mode==='focus'?'Focus':'Tracking'; statusColor=t.accent; statusDot=t.accent; statusGlow='0 0 0 3px '+t.accentRing; dotAnim='popPulse 2s ease-in-out infinite'; }
+    else if(s.running && s.paused){ statusLabel='Paused'; statusColor=t.fg2; statusDot=t.fg3; }
+
+    // week
+    const entriesForDay = i => i===4 ? s.entries : (s.week[i]?.entries || []);
+    const selectedEntries = entriesForDay(s.selectedDayIndex);
+    const selectedDay = s.week[s.selectedDayIndex] || s.week[4];
+    const dayTotalSecs = selectedEntries.reduce((a,e)=>a+e.seconds,0) + (s.selectedDayIndex===4 && s.running&&s.mode==='track'?s.elapsed:0);
+    const weekDays = s.week.map((d,i)=>{
+      const secs = entriesForDay(i).reduce((a,e)=>a+e.seconds,0) + (i===4 && s.running&&s.mode==='track'?s.elapsed:0);
+      const selected = i===s.selectedDayIndex;
+      return {
+        label:d.label,
+        time:secs>0 ? this.fmtDuration(secs) : '',
+        dayBg:selected ? t.accent : 'transparent',
+        dayColor:selected ? t.accentFg : t.fg2,
+        timeColor:selected ? t.accent : t.fg3,
+        onPick:()=>this.setState({ selectedDayIndex:i })
+      };
+    });
+    const weekSecs = Math.round(s.week.reduce((a,d,i)=>a+entriesForDay(i).reduce((sum,e)=>sum+e.seconds,0),0));
+
+    // ring
+    const ringR=52, ringCirc=2*Math.PI*ringR;
+    const ringOffset = ringCirc * (1 - s.focusRemaining/s.focusTotal);
+    const roundDots = Array.from({length:s.settings.rounds},(_,i)=>({ color: i < s.focusRound ? t.accent : t.ringTrack }));
+
+    // picker
+    const q = s.pickerSearch.toLowerCase();
+    const filtered = s.projects.filter(p=>!q || p.name.toLowerCase().includes(q) || p.client.toLowerCase().includes(q))
+      .map(p=>({ name:p.name, client:p.client, color:p.color, rowBg: p.id===s.selectedProjectId?t.hover:'transparent',
+        onPick: ()=>this.setState({ selectedProjectId:p.id, pickerOpen:false, pickerSearch:'' }) }));
+    const mpq = s.modalProjectInput.toLowerCase();
+    const modalProjects = s.projects.filter(p=>!mpq || p.name.toLowerCase().includes(mpq) || p.client.toLowerCase().includes(mpq))
+      .map(p=>({ name:p.name, client:p.client, color:p.color, rowBg: p.id===s.selectedProjectId?t.hover:'transparent',
+        onPick: ()=>this.setState({ selectedProjectId:p.id, modalProjectInput:p.name, modalProjectOpen:false }) }));
+    const mtq = s.modalTaskInput.toLowerCase();
+    const scopedTasks = s.tasks.filter(task=>!task.projectId || task.projectId===s.selectedProjectId);
+    const modalTasks = scopedTasks.filter(task=>!mtq || task.name.toLowerCase().includes(mtq) || task.kind.toLowerCase().includes(mtq))
+      .map(task=>({ name:task.name, kind:task.kind, rowBg: task.name===s.selTask?t.hover:'transparent',
+        scopeLabel: task.projectId ? 'Project' : 'Global',
+        onPick: ()=>this.setState({ selTask:task.name, modalTaskInput:task.name, modalTaskOpen:false }) }));
+
+    // settings
+    const mkStep = (key,label,last,unit,min,max)=>({ label, value: s.settings[key]+(unit||''), border:last?'none':('1px solid '+t.separator),
+      onDec: ()=>this.setState(st=>({ settings:{...st.settings,[key]:Math.max(min, st.settings[key]-(key==='rounds'?1:5))} })),
+      onInc: ()=>this.setState(st=>({ settings:{...st.settings,[key]:Math.min(max, st.settings[key]+(key==='rounds'?1:5))} })) });
+    const pomoSteppers = [ mkStep('focusLen','Focus length',false,' min',5,60), mkStep('shortBreak','Short break',false,' min',1,30), mkStep('longBreak','Long break',false,' min',5,45), mkStep('rounds','Rounds before long break',true,'',2,8) ];
+    const appearanceOpts = ['system','light','dark'].map(a=>({ label:a==='system'?'System':(a==='light'?'Light':'Dark'), weight:s.settings.appearance===a?'600':'500', bg:s.settings.appearance===a?t.segThumb:'transparent', color:s.settings.appearance===a?(this.props.platform==='kde'?'#fff':t.fg1):t.fg2, shadow:(s.settings.appearance===a&&this.props.platform==='macos')?'0 1px 2px rgba(0,0,0,0.18)':'none', onPick:()=>this.setState(st=>({ settings:{...st.settings,appearance:a} })) }));
+    const activeSettingsPage = s.settingsPage || 'general';
+    const settingsPageTitleMap = { general:'General', focus:'Focus', projects:'Projects', tasks:'Tasks' };
+    const settingsNav = page=>({
+      bg:activeSettingsPage===page?'#0a84ff':'transparent',
+      color:activeSettingsPage===page?'#ffffff':'#1d1d1f',
+      pick:()=>this.setState({ settingsPage:page })
+    });
+    const settingsGeneralNav = settingsNav('general');
+    const settingsFocusNav = settingsNav('focus');
+    const settingsProjectsNav = settingsNav('projects');
+    const settingsTasksNav = settingsNav('tasks');
+    const swatchHexes = ['#0a84ff','#bf5af2','#ff9f0a','#30d158','#ff453a','#ff2d92','#64d2ff','#8e8e93'];
+    const colorSwatches = swatchHexes.map(hex=>({ hex, ring: s.npColor===hex?('2px solid '+t.fg1):'2px solid transparent', onPick:()=>this.setState({ npColor:hex }) }));
+    const settingsProjectSwatches = swatchHexes.map(hex=>({ hex, ring:s.settingsProjectColor===hex?'2px solid #1d1d1f':'2px solid transparent', onPick:()=>this.setState({ settingsProjectColor:hex }) }));
+    const tv = on=>({ track:on?t.accent:t.ringTrack, knob:on?'18px':'2px' });
+    const idleT=tv(s.settings.idle), launchT=tv(s.settings.launch), billT=tv(s.npBillable);
+    const settingsProjects = s.projects.map((p,i)=>({
+      name:p.name,
+      color:p.color,
+      taskCount:s.tasks.filter(task=>task.projectId===p.id).length,
+      border:i===s.projects.length-1?'none':'1px solid rgba(0,0,0,0.08)',
+      onEdit:()=>this.openSettingsProject(p)
+    }));
+    const settingsTasks = s.tasks.map((task,i)=>{
+      const project = task.projectId ? this.proj(task.projectId).name : 'Global task';
+      return {
+        name:task.name,
+        scope:task.projectId ? project : project,
+        border:i===s.tasks.length-1?'none':'1px solid rgba(0,0,0,0.08)',
+        onEdit:()=>this.openSettingsTask(task, i)
+      };
+    });
+    const settingsTaskProjectOptions = s.projects.map(p=>({
+      id:p.id,
+      name:p.name,
+      bg:s.settingsTaskProjectId===p.id?'rgba(10,132,255,0.14)':'rgba(0,0,0,0.05)',
+      color:s.settingsTaskProjectId===p.id?'#0067d8':'rgba(0,0,0,0.58)',
+      onPick:()=>this.setState({ settingsTaskProjectId:p.id })
+    }));
+
+    const todayTitle = selectedDay.title;
+    const useMacFrame = (this.props.frame || 'macosPreview') !== 'none';
+    const frameStyle = useMacFrame
+      ? "box-sizing:border-box; width:100vw; height:100vh; min-height:640px; overflow:hidden; position:relative; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display',system-ui,sans-serif; color:#1d1d1f; background:#14161c;"
+      : "display:contents;";
+
+    return {
+      frameStyle, useMacFrame,
+      popoverPosition: useMacFrame ? 'absolute' : 'relative',
+      popoverPlacement: useMacFrame ? 'top:42px; right:77px; z-index:5; transition:opacity .14s var(--c-ease), transform .14s var(--c-ease); opacity:'+(s.previewPopoverOpen?'1':'0')+'; pointer-events:'+(s.previewPopoverOpen?'auto':'none')+'; transform:'+(s.previewPopoverOpen?'translateY(0)':'translateY(-4px)')+';' : '',
+      popoverDisplay: (!useMacFrame || s.previewPopoverOpen) ? 'flex' : 'none',
+      popoverFrameOpacity: s.previewPopoverOpen ? '1' : '0',
+      onTogglePreviewPopover:(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); this.setState(st=>({ previewPopoverOpen:!st.previewPopoverOpen })); },
+      onFrameBackgroundClick:()=>{ if(useMacFrame && this.state.previewPopoverOpen) this.setState({ previewPopoverOpen:false }); },
+      onPopRootClick:(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); },
+      settingsWindowOpen:useMacFrame && s.settingsWindowOpen,
+      onCloseSettingsWindow:()=>this.setState({ settingsWindowOpen:false }),
+      rootStyle: this.rootStyle(),
+      isHome, isStart:screen==='start', isSettings:screen==='settings', isNewEntry:screen==='newEntry', isNewProject:screen==='newProject',
+      canBack: !isHome, backLabel: this.props.platform==='windows'?'':'Back',
+      title: this.tc(titleMap[screen]), hasAction, actionLabel: actionMap[screen]||'', navOffset,
+      footerNewLabel:this.tc('New timer'), timerModalTitle:this.tc('New timer'), focusSessionLabel:this.tc('Focus session'),
+      editEntryTitle:this.tc('Edit entry'), editSaveLabel:this.tc('Save changes'), editDeleteLabel:this.tc('Delete entry'), cancelLabel:this.tc('Cancel'),
+      newEntrySaveLabel:this.tc('Save entry'), newProjectCreateLabel:this.tc('Create project'), pickerNewProjectLabel:this.tc('New project'), manualLinkLabel:this.tc('Log past time manually'),
+      screenAnim: s.navAnim ? 'popScrIn 0.26s var(--c-ease)' : 'none',
+      headerClock: '10:42',
+      onBack: ()=>this.pop(),
+      onOpenSettings: ()=>useMacFrame ? this.setState({ settingsWindowOpen:true, settingsPage:'general', previewPopoverOpen:false }) : this.push('settings'),
+      onStartNew: ()=>this.setState({ timerModalOpen:true, timerFocusEnabled:false, modalProjectOpen:false, modalTaskOpen:false, modalProjectInput:selP.name, modalTaskInput:s.selTask }),
+      onStartFocus: ()=>this.setState({ timerModalOpen:true, timerFocusEnabled:false, modalProjectOpen:false, modalTaskOpen:false, modalProjectInput:selP.name, modalTaskInput:s.selTask }),
+      onAction: ()=>{
+        if(screen==='newEntry'){ const secs=s.formHr*3600+s.formMin*60; const entries = secs>0?[this.makeEntry(s.selectedProjectId, s.formTask||'Untitled', secs, s.formNotes), ...s.entries]:s.entries; this.setState({ entries, formTask:'', formHr:1, formMin:0, formNotes:'', stack:['home'], navDir:'pop' }); this.triggerNavAnim(); }
+        else if(screen==='newProject'){ if(s.npName.trim()){ const id='p'+Date.now(); this.setState({ projects:[...s.projects,{id,name:s.npName.trim(),client:s.npClient||'—',color:s.npColor}], selectedProjectId:id, npName:'', npClient:'', npRate:'', npBillable:false }); } this.pop(); }
+        else this.pop();
+      },
+      // status
+      statusLabel, statusColor, statusDot, statusGlow, dotAnim,
+      // active card
+      isRunning: s.running, paused:s.paused, notPaused:!s.paused,
+      showFocusCard:s.running && s.mode==='focus', activeIsTrack: s.mode==='track', activeIsFocus: s.mode==='focus',
+      activeColor: activeProj.color, activeProjName: activeProj.name, activeTaskName: s.activeTask,
+      activeBorder: t.separator, activeRingShadow: 'transparent', activeCardBg: s.running ? t.accentFill : t.card,
+      showTitleBar: (this.props.platform||'macos')!=='macos',
+      elapsedStr: this.fmt(s.elapsed), focusStr: this.fmt(s.focusRemaining),
+      ringCirc, ringOffset, roundDots, roundLabel:'Round '+s.focusRound+' of '+s.settings.rounds,
+      pauseLabel: s.paused?'Resume':'Pause',
+      onPause:()=>this.onPause(), onSkip:()=>this.onSkip(), onStop:()=>this.onStop(),
+      // timer modal
+      timerModalOpen:s.timerModalOpen, timerFocusEnabled:s.timerFocusEnabled, modalBackdrop:dark?'rgba(0,0,0,0.42)':'rgba(0,0,0,0.18)',
+      modalProjectOpen:s.modalProjectOpen, modalTaskOpen:s.modalTaskOpen,
+      modalProjectInput:s.modalProjectInput, modalTaskInput:s.modalTaskInput,
+      modalProjects, modalTasks, selTaskLabel:s.modalTaskInput||'Choose a task',
+      focusCheckBg:s.timerFocusEnabled?t.accent:'transparent', focusCheckColor:s.timerFocusEnabled?t.accentFg:'transparent', focusCheckBorder:s.timerFocusEnabled?t.accent:t.separator,
+      timerModalStartLabel:this.tc(s.timerFocusEnabled?'Start focus':'Start timer'),
+      onCloseTimerModal:()=>this.setState({ timerModalOpen:false, modalProjectOpen:false, modalTaskOpen:false }),
+      onModalBackdrop:()=>this.setState({ timerModalOpen:false, modalProjectOpen:false, modalTaskOpen:false }),
+      onModalSheetClick:(e)=>{ if(e && e.stopPropagation) e.stopPropagation(); },
+      onToggleTimerFocus:()=>this.setState(st=>({ timerFocusEnabled:!st.timerFocusEnabled })),
+      onModalProjectFocus:()=>this.setState({ modalProjectOpen:true, modalTaskOpen:false }),
+      onModalTaskFocus:()=>this.setState({ modalTaskOpen:true, modalProjectOpen:false }),
+      onModalProjectInput:(e)=>{
+        const val=e.target.value;
+        const match=this.state.projects.find(p=>p.name.toLowerCase()===val.toLowerCase());
+        this.setState({ modalProjectInput:val, selectedProjectId:match?match.id:this.state.selectedProjectId, modalProjectOpen:true, modalTaskOpen:false });
+      },
+      onModalTaskInput:(e)=>{
+        const val=e.target.value;
+        const match=this.state.tasks.find(task=>task.name.toLowerCase()===val.toLowerCase() && (!task.projectId || task.projectId===this.state.selectedProjectId));
+        this.setState({ modalTaskInput:val, selTask:match?match.name:val, modalTaskOpen:true, modalProjectOpen:false });
+      },
+      onTimerModalStart:()=>{
+        const mode=s.timerFocusEnabled?'focus':'track';
+        const projectMatch=this.state.projects.find(p=>p.name.toLowerCase()===this.state.modalProjectInput.toLowerCase());
+        const pid=projectMatch?projectMatch.id:this.state.selectedProjectId;
+        const task=(this.state.modalTaskInput||this.state.selTask||'Untitled').trim();
+        this.setState({ timerModalOpen:false, modalProjectOpen:false, modalTaskOpen:false, selectedProjectId:pid, selTask:task });
+        this.startSession(pid, task, mode);
+      },
+      // edit entry modal
+      entryEditOpen:s.entryEditOpen,
+      editProjectInput:s.editProjectInput, editTaskInput:s.editTaskInput, editHours:s.editHours, editMinutes:s.editMinutes, editNote:s.editNote,
+      onEditBackdrop:()=>this.setState({ entryEditOpen:false, swipedEntryId:null }),
+      onCloseEdit:()=>this.setState({ entryEditOpen:false }),
+      onEditProjectInput:(e)=>this.setState({ editProjectInput:e.target.value }),
+      onEditTaskInput:(e)=>this.setState({ editTaskInput:e.target.value }),
+      onEditNote:(e)=>this.setState({ editNote:e.target.value }),
+      onEditHourDec:()=>this.setState(st=>({ editHours:Math.max(0, st.editHours-1) })),
+      onEditHourInc:()=>this.setState(st=>({ editHours:Math.min(24, st.editHours+1) })),
+      onEditMinuteDec:()=>this.setState(st=>({ editMinutes:(st.editMinutes+45)%60 })),
+      onEditMinuteInc:()=>this.setState(st=>({ editMinutes:(st.editMinutes+15)%60 })),
+      onEditSave:()=>{
+        const current=this.entryById(this.state.editEntryId);
+        if(!current) return this.setState({ entryEditOpen:false, editEntryId:null });
+        const projectMatch=this.state.projects.find(p=>p.name.toLowerCase()===this.state.editProjectInput.trim().toLowerCase());
+        const task=(this.state.editTaskInput || 'Untitled').trim() || 'Untitled';
+        const seconds=Math.max(60, this.state.editHours*3600 + this.state.editMinutes*60);
+        this.updateEntry(this.state.editEntryId, {
+          projectId:projectMatch ? projectMatch.id : current.projectId,
+          task,
+          seconds,
+          note:this.state.editNote || ''
+        });
+      },
+      onEditDelete:()=>this.deleteEntry(this.state.editEntryId),
+      // week + entries
+      weekDays, weekTotal: this.fmtShort(weekSecs), todayTitle,
+      dayTotalStr: this.fmt(dayTotalSecs),
+      taskRows: this.entryRows(selectedEntries, t, s.selectedDayIndex===4).slice(0,4),
+      selectedDayEmpty: selectedEntries.length===0,
+      // start flow
+      startIsFocus: s.startMode==='focus',
+      startActionLabel: this.tc(s.startMode==='focus'?'Start focus':'Start tracking'),
+      focusLenLabel: s.settings.focusLen+' min', roundsLabel: s.settings.rounds+'×',
+      breakTimeLabel: s.settings.shortBreak+' min', breakEveryLabel: s.settings.breakEvery===1?'Round':s.settings.breakEvery+' rounds',
+      onFocusLenDec:()=>this.setState(st=>({ settings:{...st.settings,focusLen:Math.max(5, st.settings.focusLen-5)} })),
+      onFocusLenInc:()=>this.setState(st=>({ settings:{...st.settings,focusLen:Math.min(60, st.settings.focusLen+5)} })),
+      onRoundsDec:()=>this.setState(st=>({ settings:{...st.settings,rounds:Math.max(1, st.settings.rounds-1), breakEvery:Math.min(st.settings.breakEvery, Math.max(1, st.settings.rounds-1))} })),
+      onRoundsInc:()=>this.setState(st=>({ settings:{...st.settings,rounds:Math.min(8, st.settings.rounds+1)} })),
+      onBreakTimeDec:()=>this.setState(st=>({ settings:{...st.settings,shortBreak:Math.max(1, st.settings.shortBreak-1)} })),
+      onBreakTimeInc:()=>this.setState(st=>({ settings:{...st.settings,shortBreak:Math.min(30, st.settings.shortBreak+1)} })),
+      onBreakEveryDec:()=>this.setState(st=>({ settings:{...st.settings,breakEvery:Math.max(1, st.settings.breakEvery-1)} })),
+      onBreakEveryInc:()=>this.setState(st=>({ settings:{...st.settings,breakEvery:Math.min(st.settings.rounds, st.settings.breakEvery+1)} })),
+      selProjName: selP.name, selProjColor: selP.color, selTask: s.selTask,
+      onSelTask:(e)=>this.setState({ selTask:e.target.value }),
+      pickerOpen:s.pickerOpen, pickerSearch:s.pickerSearch, filteredProjects:filtered,
+      onTogglePicker:()=>this.setState(st=>({ pickerOpen:!st.pickerOpen, pickerSearch:'' })),
+      onPickerSearch:(e)=>this.setState({ pickerSearch:e.target.value }),
+      onNewProjectFromPicker:()=>this.push('newProject'),
+      onStartConfirm:()=>this.startSession(s.selectedProjectId, s.selTask, s.startMode),
+      onGoManual:()=>{ this.setState({ formTask:s.selTask }); this.push('newEntry'); },
+      // settings
+      settingsPageTitle: settingsPageTitleMap[activeSettingsPage],
+      settingsWindowTitle: settingsPageTitleMap[activeSettingsPage],
+      settingsPageGeneral: activeSettingsPage==='general',
+      settingsPageFocus: activeSettingsPage==='focus',
+      settingsPageProjects: activeSettingsPage==='projects',
+      settingsPageTasks: activeSettingsPage==='tasks',
+      settingsGeneralBg: settingsGeneralNav.bg, settingsGeneralColor: settingsGeneralNav.color, onSelectSettingsGeneral: settingsGeneralNav.pick,
+      settingsFocusBg: settingsFocusNav.bg, settingsFocusColor: settingsFocusNav.color, onSelectSettingsFocus: settingsFocusNav.pick,
+      settingsProjectsBg: settingsProjectsNav.bg, settingsProjectsColor: settingsProjectsNav.color, onSelectSettingsProjects: settingsProjectsNav.pick,
+      settingsTasksBg: settingsTasksNav.bg, settingsTasksColor: settingsTasksNav.color, onSelectSettingsTasks: settingsTasksNav.pick,
+      pomoSteppers, appearanceOpts, settingsProjects, settingsTasks, projectCount:s.projects.length, taskCount:s.tasks.length,
+      settingsProjectEditing: s.settingsProjectEditId!==null,
+      settingsProjectCanDelete: s.settingsProjectEditId!==null && s.settingsProjectEditId!=='__new__',
+      settingsProjectEditorTitle: s.settingsProjectEditId && s.settingsProjectEditId!=='__new__' ? 'Edit project' : 'New project',
+      settingsProjectName:s.settingsProjectName, settingsProjectClient:s.settingsProjectClient, settingsProjectSwatches,
+      settingsProjectDeleteConfirm:s.settingsProjectDeleteConfirm, settingsProjectDeleteLabel:s.settingsProjectDeleteConfirm?'Confirm Delete':'Delete',
+      onNewSettingsProject:()=>this.openSettingsProject(null),
+      onCancelSettingsProjectEdit:()=>this.cancelSettingsProjectEdit(),
+      onSettingsProjectName:(e)=>this.setState({ settingsProjectName:e.target.value }),
+      onSettingsProjectClient:(e)=>this.setState({ settingsProjectClient:e.target.value }),
+      onSaveSettingsProject:()=>this.saveSettingsProject(),
+      onDeleteSettingsProject:()=>this.deleteSettingsProject(),
+      settingsTaskEditing: s.settingsTaskEditIndex!==null,
+      settingsTaskCanDelete: s.settingsTaskEditIndex!==null && s.settingsTaskEditIndex>=0,
+      settingsTaskEditorTitle: s.settingsTaskEditIndex!==null && s.settingsTaskEditIndex>=0 ? 'Edit task' : 'New task',
+      settingsTaskName:s.settingsTaskName, settingsTaskKind:s.settingsTaskKind, settingsTaskProjectId:s.settingsTaskProjectId, settingsTaskProjectOptions,
+      settingsTaskGlobalBg:s.settingsTaskProjectId?'rgba(0,0,0,0.05)':'rgba(10,132,255,0.14)',
+      settingsTaskGlobalColor:s.settingsTaskProjectId?'rgba(0,0,0,0.58)':'#0067d8',
+      onSettingsTaskProjectGlobal:()=>this.setState({ settingsTaskProjectId:'' }),
+      settingsTaskDeleteConfirm:s.settingsTaskDeleteConfirm, settingsTaskDeleteLabel:s.settingsTaskDeleteConfirm?'Confirm Delete':'Delete',
+      onNewSettingsTask:()=>this.openSettingsTask(null, null),
+      onCancelSettingsTaskEdit:()=>this.cancelSettingsTaskEdit(),
+      onSettingsTaskName:(e)=>this.setState({ settingsTaskName:e.target.value }),
+      onSettingsTaskKind:(e)=>this.setState({ settingsTaskKind:e.target.value }),
+      onSaveSettingsTask:()=>this.saveSettingsTask(),
+      onDeleteSettingsTask:()=>this.deleteSettingsTask(),
+      idleTrack:idleT.track, idleKnob:idleT.knob, launchTrack:launchT.track, launchKnob:launchT.knob,
+      onToggleIdle:()=>this.setState(st=>({ settings:{...st.settings,idle:!st.settings.idle} })),
+      onToggleLaunch:()=>this.setState(st=>({ settings:{...st.settings,launch:!st.settings.launch} })),
+      // new entry
+      formTask:s.formTask, formHr:s.formHr, formMin:s.formMin, formNotes:s.formNotes,
+      onFormTask:(e)=>this.setState({ formTask:e.target.value }), onFormNotes:(e)=>this.setState({ formNotes:e.target.value }),
+      onHrInc:()=>this.setState(st=>({ formHr:Math.min(12,st.formHr+1) })), onHrDec:()=>this.setState(st=>({ formHr:Math.max(0,st.formHr-1) })),
+      onMinInc:()=>this.setState(st=>({ formMin:(st.formMin+15)%60 })), onMinDec:()=>this.setState(st=>({ formMin:(st.formMin+45)%60 })),
+      // new project
+      npName:s.npName, npClient:s.npClient, npBillable:s.npBillable, npRate:s.npRate, colorSwatches,
+      billTrack:billT.track, billKnob:billT.knob,
+      onNpName:(e)=>this.setState({ npName:e.target.value }), onNpClient:(e)=>this.setState({ npClient:e.target.value }), onNpRate:(e)=>this.setState({ npRate:e.target.value }),
+      onToggleBillable:()=>this.setState(st=>({ npBillable:!st.npBillable }))
+    };
+  }
+}
+</script>
+</body>
+</html>

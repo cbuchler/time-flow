@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&family=Noto+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; }
+  *::-webkit-scrollbar { width:9px; height:9px; }
+  *::-webkit-scrollbar-thumb { background:rgba(120,120,128,0.4); border-radius:5px; }
+</style>
+</helmet>
+<div style="box-sizing:border-box; width:max-content; min-width:100%; min-height:100vh; padding:48px; background:#e7e5df; font-family:'Inter',system-ui,sans-serif; color:#1d1d1f;">
+
+  <!-- ===================== HEADER ===================== -->
+  <div style="max-width:1120px; margin-bottom:30px;">
+    <div style="font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#8a8a82; margin-bottom:10px;">Cross-platform tray app · interactive prototype</div>
+    <h1 style="font-size:38px; font-weight:700; letter-spacing:-0.025em; margin:0 0 12px; line-height:1.05;">One time-tracker, four native shells</h1>
+    <p style="font-size:15.5px; line-height:1.5; color:#55554e; max-width:720px; margin:0;">A menu-bar / system-tray app for time tracking and Pomodoro. The popover <strong>is</strong> the window — every secondary screen is a drill-down inside the same fixed footprint. One shared component system, recolored by semantic tokens, rendered to each platform's desktop HIG in light and dark. The macOS variant follows Menu Bar Extra, NSPopover, AppKit sheet, and Liquid Glass material conventions rather than iOS navigation patterns.</p>
+  </div>
+
+  <!-- ===================== DESIGN SYSTEM PANEL ===================== -->
+  <div style="width:1120px; background:#ffffff; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:30px 32px; margin-bottom:46px;">
+
+    <div style="font-size:13px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#0a84ff; margin-bottom:4px;">Shared design system</div>
+    <h2 style="font-size:22px; font-weight:700; letter-spacing:-0.02em; margin:0 0 20px;">Semantic tokens → native palettes</h2>
+
+    <!-- Token matrix -->
+    <div style="overflow:hidden; border:1px solid #ececec; border-radius:6px; margin-bottom:36px;">
+      <div style="display:grid; grid-template-columns:170px repeat(4,1fr); background:#fafafa; border-bottom:1px solid #ececec;">
+        <div style="padding:10px 14px; font-size:11px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:#9a9a92;">Token</div>
+        <sc-for list="{{ platforms }}" as="p" hint-placeholder-count="4">
+          <div style="padding:10px 14px; border-left:1px solid #ececec;">
+            <div style="font-size:12.5px; font-weight:700; color:#1d1d1f;">{{ p.name }}</div>
+            <div style="display:flex; gap:14px; margin-top:3px; font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:#aaa;">
+              <span style="width:34px;">Light</span><span>Dark</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-for list="{{ tokenRows }}" as="row" hint-placeholder-count="7">
+        <div style="display:grid; grid-template-columns:170px repeat(4,1fr); border-bottom:{{ row.border }};">
+          <div style="padding:11px 14px; display:flex; flex-direction:column; gap:1px; justify-content:center;">
+            <span style="font-size:12.5px; font-weight:600; color:#1d1d1f;">{{ row.label }}</span>
+            <span style="font-size:11px; color:#a0a098;">{{ row.varname }}</span>
+          </div>
+          <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="4">
+            <div style="padding:11px 14px; border-left:1px solid #f0f0f0; display:flex; gap:9px; align-items:center;">
+              <span style="width:34px; height:26px; border-radius:5px; background:{{ c.l }}; border:1px solid rgba(0,0,0,0.12); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4);"></span>
+              <span style="width:34px; height:26px; border-radius:5px; background:{{ c.d }}; border:1px solid rgba(255,255,255,0.14); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.3);"></span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- Primitives + Mapping side by side -->
+    <div style="display:grid; grid-template-columns:300px 1fr; gap:40px; align-items:start;">
+
+      <div>
+        <h3 style="font-size:15px; font-weight:700; letter-spacing:-0.01em; margin:0 0 14px;">Shared primitives</h3>
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          <sc-for list="{{ primitives }}" as="pr" hint-placeholder-count="11">
+            <div style="display:flex; gap:10px; padding:7px 0; border-bottom:1px solid #f4f4f4;">
+              <span style="flex:none; width:22px; height:22px; border-radius:5px; background:#f1f1f4; color:#0a84ff; display:flex; align-items:center; justify-content:center;">{{ pr.icon }}</span>
+              <span style="display:flex; flex-direction:column; gap:1px;">
+                <span style="font-size:12.5px; font-weight:600; color:#1d1d1f; line-height:1.25;">{{ pr.name }}</span>
+                <span style="font-size:11.5px; color:#8a8a82; line-height:1.3;">{{ pr.note }}</span>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-size:15px; font-weight:700; letter-spacing:-0.01em; margin:0 0 14px;">Primitive → native control mapping</h3>
+        <div style="overflow:hidden; border:1px solid #ececec; border-radius:6px;">
+          <div style="display:grid; grid-template-columns:1.1fr 1.2fr 1.2fr 1.2fr 1.1fr; background:#fafafa; border-bottom:1px solid #ececec; font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#9a9a92;">
+            <div style="padding:9px 12px;">Primitive</div>
+            <div style="padding:9px 12px; border-left:1px solid #ececec;">macOS</div>
+            <div style="padding:9px 12px; border-left:1px solid #ececec;">Windows 11</div>
+            <div style="padding:9px 12px; border-left:1px solid #ececec;">GNOME</div>
+            <div style="padding:9px 12px; border-left:1px solid #ececec;">KDE</div>
+          </div>
+          <sc-for list="{{ mapRows }}" as="m" hint-placeholder-count="13">
+            <div style="display:grid; grid-template-columns:1.1fr 1.2fr 1.2fr 1.2fr 1.1fr; border-bottom:{{ m.border }}; font-size:11.5px;">
+              <div style="padding:8px 12px; font-weight:600; color:#1d1d1f;">{{ m.prim }}</div>
+              <div style="padding:8px 12px; border-left:1px solid #f0f0f0; color:#55554e;">{{ m.macos }}</div>
+              <div style="padding:8px 12px; border-left:1px solid #f0f0f0; color:#55554e;">{{ m.windows }}</div>
+              <div style="padding:8px 12px; border-left:1px solid #f0f0f0; color:#55554e;">{{ m.gnome }}</div>
+              <div style="padding:8px 12px; border-left:1px solid #f0f0f0; color:#55554e;">{{ m.kde }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== PLATFORM FRAMES ===================== -->
+  <div style="display:flex; flex-direction:column; gap:46px;">
+  <!-- ===== macOS ===== -->
+  <div>
+    <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:16px;">
+      <h2 style="font-size:21px; font-weight:700; letter-spacing:-0.02em; margin:0;">Apple · macOS</h2>
+      <span style="font-size:13px; color:#7a7a72;">Menu Bar Extra · NSPopover · Liquid Glass · SF Pro · system accent</span>
+    </div>
+    <div style="display:flex; gap:28px; align-items:flex-start;">
+
+      <!-- light home -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Home · light</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:linear-gradient(160deg,#e9b7d4,#a98fe0 45%,#6d8fe8);">
+          <div style="position:absolute; top:0; left:0; right:0; height:26px; display:flex; align-items:center; padding:0 12px; background:rgba(255,255,255,0.5); backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%); border-bottom:1px solid rgba(0,0,0,0.06); font-size:13px; color:#1d1d1f;">
+            <span style="font-size:14px; margin-right:13px;"></span>
+            <span style="font-weight:700; margin-right:15px;">Tracker</span>
+            <span style="color:rgba(0,0,0,0.7); margin-right:14px;">File</span><span style="color:rgba(0,0,0,0.7); margin-right:14px;">Edit</span><span style="color:rgba(0,0,0,0.7); margin-right:14px;">View</span><span style="color:rgba(0,0,0,0.7);">Help</span>
+            <span style="flex:1;"></span>
+            <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2" style="margin-right:13px;"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            <svg width="24" height="14" viewBox="0 0 30 14" style="margin-right:13px;"><rect x="1" y="2.5" width="24" height="9" rx="2.5" fill="none" stroke="#1d1d1f" stroke-width="1.4"/><rect x="3" y="4.5" width="17" height="5" rx="1" fill="#1d1d1f"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#1d1d1f"/></svg>
+            <span style="display:flex; align-items:center; gap:5px; height:20px; padding:0 7px; border-radius:5px; background:rgba(0,0,0,0.08); margin-right:11px;"><span id="tmacl-rec" style="width:6px; height:6px; border-radius:50%; background:#ff3b30; opacity:0; transition:opacity .25s;"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a6ad6" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg><span id="tmacl-time" style="font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:#0a6ad6;"></span></span>
+            <span style="font-weight:500;">Tue 10:42</span>
+          </div>
+          <div style="position:absolute; top:31px; right:54px; width:13px; height:13px; background:#f5f3f7; transform:rotate(45deg); box-shadow:-1px -1px 1px rgba(0,0,0,0.04);"></div>
+          <dc-import name="Popover" frame="none" tray-id="tmacl" platform="macos" theme="light" screen="home" mode="track" hint-size="340px,556px" style="position:absolute; top:38px; right:14px;"></dc-import>
+        </div>
+      </div>
+
+      <!-- dark focus running -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Focus running · dark</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:linear-gradient(160deg,#3a2350,#1d2747 50%,#0b1326);">
+          <div style="position:absolute; top:0; left:0; right:0; height:26px; display:flex; align-items:center; padding:0 12px; background:rgba(0,0,0,0.32); backdrop-filter:blur(20px) saturate(160%); -webkit-backdrop-filter:blur(20px) saturate(160%); border-bottom:1px solid rgba(255,255,255,0.08); font-size:13px; color:rgba(255,255,255,0.92);">
+            <span style="font-size:14px; margin-right:13px;"></span>
+            <span style="font-weight:700; margin-right:15px;">Tracker</span>
+            <span style="color:rgba(255,255,255,0.7); margin-right:14px;">File</span><span style="color:rgba(255,255,255,0.7); margin-right:14px;">Edit</span><span style="color:rgba(255,255,255,0.7); margin-right:14px;">View</span><span style="color:rgba(255,255,255,0.7);">Help</span>
+            <span style="flex:1;"></span>
+            <svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="margin-right:13px;"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+            <svg width="24" height="14" viewBox="0 0 30 14" style="margin-right:13px;"><rect x="1" y="2.5" width="24" height="9" rx="2.5" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="3" y="4.5" width="11" height="5" rx="1" fill="#fff"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#fff"/></svg>
+            <span style="display:flex; align-items:center; gap:5px; height:20px; padding:0 7px; border-radius:5px; background:rgba(10,132,255,0.32); margin-right:11px;"><span id="tmacd-rec" style="width:6px; height:6px; border-radius:50%; background:#ff453a; opacity:0; transition:opacity .25s;"></span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5cb0ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg><span id="tmacd-time" style="font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:#5cb0ff;"></span></span>
+            <span style="font-weight:500;">Tue 10:42</span>
+          </div>
+          <div style="position:absolute; top:31px; right:54px; width:13px; height:13px; background:#34343a; transform:rotate(45deg);"></div>
+          <dc-import name="Popover" frame="none" tray-id="tmacd" platform="macos" theme="dark" screen="home" mode="focus" running="true" hint-size="340px,556px" style="position:absolute; top:38px; right:14px;"></dc-import>
+        </div>
+      </div>
+
+      <!-- settings pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Settings · pushed</div>
+        <div style="width:380px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(160deg,#e9b7d4,#a98fe0 45%,#6d8fe8); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="macos" theme="light" screen="settings" hint-size="340px,556px"></dc-import>
+        </div>
+      </div>
+
+      <!-- new project pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">New project · pushed</div>
+        <div style="width:380px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(160deg,#e9b7d4,#a98fe0 45%,#6d8fe8); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="macos" theme="light" screen="newProject" hint-size="340px,556px"></dc-import>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- ===== Windows 11 ===== -->
+  <div>
+    <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:16px;">
+      <h2 style="font-size:21px; font-weight:700; letter-spacing:-0.02em; margin:0;">Microsoft · Windows 11</h2>
+      <span style="font-size:13px; color:#7a7a72;">System tray flyout · WinUI/Fluent surfaces · Mica + Acrylic hierarchy · Segoe UI Variable</span>
+    </div>
+    <div style="display:flex; gap:28px; align-items:flex-start;">
+
+      <!-- light home -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Home · light</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:radial-gradient(circle at 16% 16%, rgba(255,255,255,0.16), transparent 24%), linear-gradient(135deg,#163a63,#2e6ca2 50%,#78b7dc);">
+          <dc-import name="Popover" frame="none" tray-id="twinl" platform="windows" theme="light" screen="home" mode="track" hint-size="340px,556px" style="position:absolute; bottom:58px; right:12px;"></dc-import>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:48px; display:flex; align-items:center; padding:0 14px; background:rgba(243,243,243,0.78); backdrop-filter:blur(30px) saturate(150%); -webkit-backdrop-filter:blur(30px) saturate(150%); border-top:1px solid rgba(255,255,255,0.72);">
+            <div style="flex:1; display:flex; justify-content:center;">
+              <div style="display:flex; align-items:center; gap:8px; padding:0 12px; height:38px; border-radius:19px; background:rgba(255,255,255,0.42); border:1px solid rgba(255,255,255,0.55); box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);">
+                <svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1" fill="#0078d4"/><rect x="13" y="3" width="8" height="8" rx="1" fill="#0078d4"/><rect x="3" y="13" width="8" height="8" rx="1" fill="#0078d4"/><rect x="13" y="13" width="8" height="8" rx="1" fill="#0078d4"/></svg>
+                <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.56); border:1px solid rgba(0,0,0,0.04);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a4a4a" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+                <div style="position:relative; display:flex; align-items:center; justify-content:center; width:36px; height:34px; border-radius:8px; background:rgba(0,95,184,0.12);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#005fb8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+                  <span style="position:absolute; bottom:3px; left:50%; transform:translateX(-50%); width:14px; height:3px; border-radius:2px; background:#005fb8;"></span>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4a4a4a" stroke-width="2"><rect x="4" y="4" width="7" height="7" rx="1"></rect><rect x="13" y="4" width="7" height="7" rx="1"></rect><rect x="4" y="13" width="7" height="7" rx="1"></rect><rect x="13" y="13" width="7" height="7" rx="1"></rect></svg>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:13px; padding-right:2px; margin-left:auto;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2.4"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#333"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="#333" stroke-width="1.6"/></svg>
+              <div style="display:flex; align-items:center; gap:5px; padding:0 8px; height:24px; border-radius:6px; background:rgba(255,255,255,0.5);">
+                <span id="twinl-rec" style="width:6px; height:6px; border-radius:50%; background:#c42b1c; opacity:0; transition:opacity .25s;"></span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#005fb8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+                <span id="twinl-time" style="font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:#005fb8;"></span>
+              </div>
+              <svg width="24" height="14" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#333" stroke-width="1.4"/><rect x="3" y="4.5" width="18" height="5" rx="1" fill="#333"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#333"/></svg>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; font-size:11px; color:#333; line-height:1.25;"><span>10:42 AM</span><span>6/21/2026</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- dark focus running -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Focus running · dark</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:radial-gradient(circle at 18% 18%, rgba(255,255,255,0.08), transparent 24%), linear-gradient(135deg,#0a2236,#123957 50%,#1b5672);">
+          <dc-import name="Popover" frame="none" tray-id="twind" platform="windows" theme="dark" screen="home" mode="focus" running="true" hint-size="340px,556px" style="position:absolute; bottom:58px; right:12px;"></dc-import>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:48px; display:flex; align-items:center; padding:0 14px; background:rgba(32,32,32,0.84); backdrop-filter:blur(30px) saturate(150%); -webkit-backdrop-filter:blur(30px) saturate(150%); border-top:1px solid rgba(255,255,255,0.08);">
+            <div style="flex:1; display:flex; justify-content:center;">
+              <div style="display:flex; align-items:center; gap:8px; padding:0 12px; height:38px; border-radius:19px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);">
+                <svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1" fill="#4cc2ff"/><rect x="13" y="3" width="8" height="8" rx="1" fill="#4cc2ff"/><rect x="3" y="13" width="8" height="8" rx="1" fill="#4cc2ff"/><rect x="13" y="13" width="8" height="8" rx="1" fill="#4cc2ff"/></svg>
+                <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c7c7c7" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </div>
+                <div style="position:relative; display:flex; align-items:center; justify-content:center; width:36px; height:34px; border-radius:8px; background:rgba(96,205,255,0.18);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60cdff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+                  <span style="position:absolute; bottom:3px; left:50%; transform:translateX(-50%); width:14px; height:3px; border-radius:2px; background:#60cdff;"></span>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px;">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#c7c7c7" stroke-width="2"><rect x="4" y="4" width="7" height="7" rx="1"></rect><rect x="13" y="4" width="7" height="7" rx="1"></rect><rect x="4" y="13" width="7" height="7" rx="1"></rect><rect x="13" y="13" width="7" height="7" rx="1"></rect></svg>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:13px; padding-right:2px; margin-left:auto;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2.4"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ddd"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="#ddd" stroke-width="1.6"/></svg>
+              <div style="display:flex; align-items:center; gap:5px; padding:0 8px; height:24px; border-radius:6px; background:rgba(255,255,255,0.08);">
+                <span id="twind-rec" style="width:6px; height:6px; border-radius:50%; background:#ff99a4; opacity:0; transition:opacity .25s;"></span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60cdff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+                <span id="twind-time" style="font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; color:#60cdff;"></span>
+              </div>
+              <svg width="24" height="14" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#ddd" stroke-width="1.4"/><rect x="3" y="4.5" width="12" height="5" rx="1" fill="#ddd"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#ddd"/></svg>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; font-size:11px; color:#eee; line-height:1.25;"><span>10:42 AM</span><span>6/21/2026</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- settings pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Settings · pushed</div>
+        <div style="width:380px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(135deg,#0e4a7b,#2f8fd0 48%,#73d0e0); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="windows" theme="light" screen="settings" hint-size="340px,556px"></dc-import>
+        </div>
+      </div>
+
+      <!-- new project pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">New project · pushed</div>
+        <div style="width:380px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(135deg,#0e4a7b,#2f8fd0 48%,#73d0e0); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="windows" theme="light" screen="newProject" hint-size="340px,556px"></dc-import>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- ===== GNOME ===== -->
+  <div>
+    <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:16px;">
+      <h2 style="font-size:21px; font-weight:700; letter-spacing:-0.02em; margin:0;">Linux · GNOME</h2>
+      <span style="font-size:13px; color:#7a7a72;">Top-bar indicator · libadwaita popover · header bar discipline · boxed lists · Cantarell</span>
+    </div>
+    <div style="display:flex; gap:28px; align-items:flex-start;">
+
+      <!-- light home -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Home · light</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:linear-gradient(160deg,#85a6cc,#698ab4 52%,#4f6c92);">
+          <div style="position:absolute; top:0; left:0; right:0; height:28px; display:flex; align-items:center; padding:0 14px; background:#1f1f1f; color:rgba(255,255,255,0.92); font-size:13px; font-weight:600;">
+            <span>Activities</span>
+            <span style="flex:1;"></span>
+            <span style="font-weight:700;">Tue 10:42</span>
+            <span style="flex:1;"></span>
+            <div style="display:flex; align-items:center; gap:8px; margin-left:12px; padding:0 10px; height:22px; border-radius:11px; background:rgba(255,255,255,0.1);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+              <span id="tgnol-rec" style="width:6px; height:6px; border-radius:50%; background:#ff5c5c; opacity:0; transition:opacity .25s;"></span>
+              <span id="tgnol-time" style="font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; color:#fff;"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M12 20h.01"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 5 6 9H2v6h4l5 4z"/></svg>
+              <svg width="20" height="12" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="3" y="4.5" width="19" height="5" rx="1" fill="#fff"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#fff"/></svg>
+            </div>
+          </div>
+          <div style="position:absolute; top:33px; right:104px; width:13px; height:13px; background:#ffffff; transform:rotate(45deg); box-shadow:-1px -1px 2px rgba(0,0,0,0.08);"></div>
+          <dc-import name="Popover" frame="none" tray-id="tgnol" platform="gnome" theme="light" screen="home" mode="track" hint-size="340px,556px" style="position:absolute; top:40px; right:14px;"></dc-import>
+        </div>
+      </div>
+
+      <!-- dark focus running -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Focus running · dark</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:linear-gradient(160deg,#344766,#253450 52%,#192333);">
+          <div style="position:absolute; top:0; left:0; right:0; height:28px; display:flex; align-items:center; padding:0 14px; background:#1f1f1f; color:rgba(255,255,255,0.92); font-size:13px; font-weight:600;">
+            <span>Activities</span>
+            <span style="flex:1;"></span>
+            <span style="font-weight:700;">Tue 10:42</span>
+            <span style="flex:1;"></span>
+            <div style="display:flex; align-items:center; gap:8px; margin-left:12px; padding:0 10px; height:22px; border-radius:11px; background:rgba(120,174,237,0.22);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9cc4f5" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg>
+              <span id="tgnod-rec" style="width:6px; height:6px; border-radius:50%; background:#ff7b63; opacity:0; transition:opacity .25s;"></span>
+              <span id="tgnod-time" style="font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; color:#9cc4f5;"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M12 20h.01"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M11 5 6 9H2v6h4l5 4z"/></svg>
+              <svg width="20" height="12" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="3" y="4.5" width="13" height="5" rx="1" fill="#fff"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#fff"/></svg>
+            </div>
+          </div>
+          <div style="position:absolute; top:33px; right:104px; width:13px; height:13px; background:#2d2d2d; transform:rotate(45deg);"></div>
+          <dc-import name="Popover" frame="none" tray-id="tgnod" platform="gnome" theme="dark" screen="home" mode="focus" running="true" hint-size="340px,556px" style="position:absolute; top:40px; right:14px;"></dc-import>
+        </div>
+      </div>
+
+      <!-- settings pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Settings · pushed</div>
+        <div style="width:380px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(160deg,#7aa7d6,#4f7cb5 50%,#34507a); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="settings" hint-size="340px,556px"></dc-import>
+        </div>
+      </div>
+
+      <!-- new project pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">New project · pushed</div>
+        <div style="width:380px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(160deg,#7aa7d6,#4f7cb5 50%,#34507a); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="gnome" theme="light" screen="newProject" hint-size="340px,556px"></dc-import>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- ===== KDE ===== -->
+  <div>
+    <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:16px;">
+      <h2 style="font-size:21px; font-weight:700; letter-spacing:-0.02em; margin:0;">Linux · KDE Plasma</h2>
+      <span style="font-size:13px; color:#7a7a72;">System tray applet · Breeze popup · compact panel rhythm · Noto Sans · simple by default</span>
+    </div>
+    <div style="display:flex; gap:28px; align-items:flex-start;">
+
+      <!-- light home -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Home · light</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:linear-gradient(160deg,#7f97a7,#667f90 50%,#516877);">
+          <dc-import name="Popover" frame="none" tray-id="tkdel" platform="kde" theme="light" screen="home" mode="track" hint-size="322px,548px" style="position:absolute; bottom:54px; right:12px;"></dc-import>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:44px; display:flex; align-items:center; padding:0 8px; background:rgba(239,240,241,0.96); border-top:1px solid rgba(0,0,0,0.12);">
+            <div style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:4px; background:#3daee9; margin-right:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2 3 7v10l9 5 9-5V7z" opacity="0.9"/><circle cx="12" cy="12" r="3" fill="#3daee9"/></svg></div>
+            <div style="display:flex; align-items:center; gap:6px; padding:0 10px; height:32px; border-radius:4px; background:rgba(61,174,233,0.1); border:1px solid rgba(61,174,233,0.22);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2a90c8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg><span style="font-size:12px; color:#232627; font-weight:500;">Tracker</span><span id="tkdel-rec" style="width:6px; height:6px; border-radius:50%; background:#da4453; opacity:0; transition:opacity .25s;"></span><span id="tkdel-time" style="font-size:11.5px; font-weight:600; font-variant-numeric:tabular-nums; color:#232627;"></span></div>
+            <span style="flex:1;"></span>
+            <div style="display:flex; align-items:center; gap:10px; padding-right:6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4d4d4d" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M12 20h.01"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#4d4d4d"><path d="M11 5 6 9H2v6h4l5 4z"/></svg>
+              <svg width="22" height="13" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#4d4d4d" stroke-width="1.4"/><rect x="3" y="4.5" width="18" height="5" rx="1" fill="#4d4d4d"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#4d4d4d"/></svg>
+              <div style="width:1px; height:18px; background:rgba(0,0,0,0.14);"></div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; font-size:11px; color:#232627; line-height:1.2;"><span style="font-weight:600;">10:42</span><span style="font-size:9.5px; color:#666;">Tue Jun 21</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- dark focus running -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Focus running · dark (Breeze Dark)</div>
+        <div style="position:relative; width:520px; height:632px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.16); background:linear-gradient(160deg,#263841,#1d2c34 50%,#162128);">
+          <dc-import name="Popover" frame="none" tray-id="tkded" platform="kde" theme="dark" screen="home" mode="focus" running="true" hint-size="322px,548px" style="position:absolute; bottom:54px; right:12px;"></dc-import>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:44px; display:flex; align-items:center; padding:0 8px; background:rgba(42,46,50,0.96); border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:4px; background:#3daee9; margin-right:6px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 2 3 7v10l9 5 9-5V7z" opacity="0.9"/><circle cx="12" cy="12" r="3" fill="#3daee9"/></svg></div>
+            <div style="display:flex; align-items:center; gap:6px; padding:0 10px; height:32px; border-radius:4px; background:rgba(61,174,233,0.14); border:1px solid rgba(61,174,233,0.28);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5cc4f0" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg><span id="tkded-rec" style="width:6px; height:6px; border-radius:50%; background:#da4453; opacity:0; transition:opacity .25s;"></span><span id="tkded-time" style="font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; color:#fcfcfc;"></span></div>
+            <span style="flex:1;"></span>
+            <div style="display:flex; align-items:center; gap:10px; padding-right:6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c5c8ca" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M12 20h.01"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#c5c8ca"><path d="M11 5 6 9H2v6h4l5 4z"/></svg>
+              <svg width="22" height="13" viewBox="0 0 30 14"><rect x="1" y="2.5" width="24" height="9" rx="2" fill="none" stroke="#c5c8ca" stroke-width="1.4"/><rect x="3" y="4.5" width="13" height="5" rx="1" fill="#c5c8ca"/><rect x="26" y="5" width="2" height="4" rx="1" fill="#c5c8ca"/></svg>
+              <div style="width:1px; height:18px; background:rgba(255,255,255,0.12);"></div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; font-size:11px; color:#fcfcfc; line-height:1.2;"><span style="font-weight:600;">10:42</span><span style="font-size:9.5px; color:#aaa;">Tue Jun 21</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- settings pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">Settings · pushed</div>
+        <div style="width:362px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(160deg,#5a7a8c,#3c5a6e 50%,#27414f); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="kde" theme="light" screen="settings" hint-size="322px,548px"></dc-import>
+        </div>
+      </div>
+
+      <!-- new project pushed -->
+      <div style="flex:none;">
+        <div style="font-size:12px; font-weight:600; color:#7a7a72; margin-bottom:9px;">New project · pushed</div>
+        <div style="width:362px; height:600px; border-radius:11px; overflow:hidden; box-shadow:0 8px 30px rgba(0,0,0,0.12); background:linear-gradient(160deg,#5a7a8c,#3c5a6e 50%,#27414f); display:flex; align-items:flex-start; justify-content:center; padding-top:28px;">
+          <dc-import name="Popover" frame="none" platform="kde" theme="light" screen="newProject" hint-size="322px,548px"></dc-import>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!--FRAMES_END--></div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const platforms = [{name:'macOS'},{name:'Windows 11'},{name:'GNOME'},{name:'KDE'}];
+    // light/dark swatch per platform, order: macOS, Windows, GNOME, KDE
+    const tk = (label, varname, mac, win, gno, kde, last)=>({
+      label, varname, border: last?'none':'1px solid #f0f0f0',
+      cells: [mac, win, gno, kde].map(([l,d])=>({l,d}))
+    });
+    const tokenRows = [
+      tk('Background','--c-material', ['rgba(246,248,252,.58)','rgba(28,29,34,.58)'], ['#f3f3f3','#2b2b2b'], ['#ffffff','#2d2d2d'], ['#eff0f1','#2a2e32']),
+      tk('Elevated surface','--c-card', ['rgba(255,255,255,.56)','rgba(52,54,62,.54)'], ['#ffffff','#353535'], ['#f6f6f6','#383838'], ['#fcfcfc','#31363b']),
+      tk('Separator','--c-separator', ['#e6e6e6','#444448'], ['#ededed','#3a3a3a'], ['#ededed','#404040'], ['#d6d8da','#4d5258']),
+      tk('Primary text','--c-fg1', ['#1d1d1f','#ffffff'], ['#1a1a1a','#ffffff'], ['#161616','#ffffff'], ['#232627','#fcfcfc']),
+      tk('Secondary text','--c-fg2', ['#8a8a8e','#9a9a9e'], ['#6e6e6e','#9a9a9a'], ['#777777','#b0b0b0'], ['#4d4d4d','#c5c8ca']),
+      tk('Accent','--c-accent', ['#0a84ff','#0a84ff'], ['#005fb8','#60cdff'], ['#3584e4','#78aeed'], ['#3daee9','#3daee9']),
+      tk('Timer ring','--c-ring', ['#0a84ff','#0a84ff'], ['#005fb8','#60cdff'], ['#3584e4','#78aeed'], ['#3daee9','#3daee9'], true)
+    ];
+    const prim = (icon,name,note)=>({icon,name,note});
+    const primitives = [
+      prim('◳','Popover container','Fixed width · navigation stack inside'),
+      prim('⌃','Nav chrome','Title + back + contextual action'),
+      prim('⇄','Mode toggle','Track | Focus segmented'),
+      prim('▾','Project picker','Searchable list / dropdown'),
+      prim('◷','Timer display','Live elapsed · circular countdown'),
+      prim('▸','Transport','Start · pause · skip · stop'),
+      prim('≡','Entries list','Grouped by project · day total'),
+      prim('▭','Text field','Label + input + focus ring'),
+      prim('◉','Toggle row','Switch + label'),
+      prim('±','Stepper','Numeric inc / dec'),
+      prim('●','Color tag','Project color picker'),
+      prim('◧','Token set','Background · surface · accent · ring')
+    ];
+    const mr = (prim,macos,windows,gnome,kde,last)=>({prim,macos,windows,gnome,kde,border:last?'none':'1px solid #f0f0f0'});
+    const mapRows = [
+      mr('Entry point','Menu Bar Extra (top-right)','System tray (bottom-right)','Top-bar indicator','Tray applet'),
+      mr('Container','NSPopover · Liquid Glass + arrow','Tray flyout · Mica host + Acrylic transient surfaces','AdwPopover · compact and low complexity','Plasma popup · Breeze surface'),
+      mr('Nav / back','Desktop popover stack · toolbar back','WinUI title/action row · restrained chrome','AdwNavigationView subpage','Toolbar back · compact header'),
+      mr('Mode toggle','NSSegmentedControl','Segmented selection / compact tabs','Linked toggle buttons','Breeze tab bar'),
+      mr('Project picker','NSPopUpButton','ComboBox flyout','AdwComboRow','Breeze ComboBox'),
+      mr('Timer ring','Accent stroke ring','Accent stroke ring','Accent stroke ring','Accent stroke ring'),
+      mr('Settings list','Inset grouped list','Settings cards and grouped rows','AdwPreferencesGroup / boxed lists','Form layout · grouped sections'),
+      mr('Toggle row','NSSwitch','ToggleSwitch','AdwSwitchRow','Breeze switch'),
+      mr('Stepper','NSStepper','NumberBox','GtkSpinButton','Breeze SpinBox'),
+      mr('Field / focus','Focus ring 2px','Reveal underline','Accent border','Accent border'),
+      mr('Accent token','System accent (blue)','Fluent accent','Adwaita #3584e4','Breeze #3daee9'),
+      mr('Modal surface','AppKit sheet over popover','ContentDialog / flyout','AdwDialog','Breeze dialog'),
+      mr('Material','Liquid Glass · rim highlight','Mica base + Acrylic overlays','Opaque flat','Opaque Breeze'),
+      mr('Corner radius','18 pt glass / 10 pt controls','8 px','12 px','6 px', true)
+    ];
+    return { platforms, tokenRows, primitives, mapRows };
+  }
+}
+</script>
+</body>
+</html>
