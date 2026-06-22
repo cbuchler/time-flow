@@ -82,20 +82,26 @@ fn position_under_tray(app: &AppHandle, window: &tauri::WebviewWindow) {
     let Ok(Some(rect)) = tray.rect() else {
         return;
     };
-    // tauri::Position and tauri::Size are enums; extract physical pixel values
-    let (tray_x, tray_y) = match rect.position {
-        tauri::Position::Physical(p) => (p.x as f64, p.y as f64),
-        tauri::Position::Logical(p) => (p.x, p.y),
+    // Normalise everything to logical pixels using the window's scale factor
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let tray_x = match &rect.position {
+        tauri::Position::Physical(p) => p.x as f64 / scale,
+        tauri::Position::Logical(p) => p.x,
     };
-    let (tray_w, tray_h) = match rect.size {
-        tauri::Size::Physical(s) => (s.width as f64, s.height as f64),
-        tauri::Size::Logical(s) => (s.width, s.height),
+    let tray_y = match &rect.position {
+        tauri::Position::Physical(p) => p.y as f64 / scale,
+        tauri::Position::Logical(p) => p.y,
     };
-    let win_w = window.outer_size().map(|s| s.width as f64).unwrap_or(720.0);
+    let tray_w = match &rect.size {
+        tauri::Size::Physical(s) => s.width as f64 / scale,
+        tauri::Size::Logical(s) => s.width,
+    };
+    let tray_h = match &rect.size {
+        tauri::Size::Physical(s) => s.height as f64 / scale,
+        tauri::Size::Logical(s) => s.height,
+    };
+    let win_w = window.outer_size().map(|s| s.width as f64 / scale).unwrap_or(360.0);
     let x = (tray_x + tray_w / 2.0 - win_w / 2.0).max(0.0);
     let y = tray_y + tray_h;
-    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-        x: x as i32,
-        y: y as i32,
-    }));
+    let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
 }

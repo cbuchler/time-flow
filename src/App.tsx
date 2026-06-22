@@ -582,7 +582,8 @@ function MacPopover({
           onSkip={onSkipFocus}
         />
       ) : null}
-      <ScrollView style={styles.entryList}>
+      <ScrollView style={styles.entryList} contentContainerStyle={styles.entryListContent}>
+        <View style={styles.entryListGrow}>
         {activeProjects.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>Welcome to Time & Flow</Text>
@@ -623,6 +624,7 @@ function MacPopover({
             </Pressable>
           ))
         )}
+        </View>
         <View style={styles.grayFill} />
       </ScrollView>
       <View style={styles.footer}>
@@ -1735,6 +1737,7 @@ const styles = StyleSheet.create({
   dayValue: { fontSize: 23, color: "#93959a", fontWeight: "800", minHeight: 28 },
   dayValueActive: { fontSize: 23, color: "#1688f8", fontWeight: "900", minHeight: 28 },
   entryList: { flex: 1, backgroundColor: "var(--c-surface, #f4f5f8)" },
+  entryListContent: { flexGrow: 1, flexDirection: "column" as const },
   entryRow: {
     minHeight: 158,
     paddingHorizontal: 36,
@@ -1966,6 +1969,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   startText: { color: "#fff", fontSize: 27, fontWeight: "800" },
+  entryListGrow: { flex: 1 },
   emptyState: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 48, gap: 12 },
   emptyStateText: { fontSize: 15, color: "#e5e7eb", fontWeight: "500", textAlign: "center" },
   emptyStateSubtext: { fontSize: 13, color: "#9ca3af", textAlign: "center", paddingHorizontal: 24 },
