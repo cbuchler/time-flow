@@ -23,7 +23,7 @@ import {
   updateTask,
 } from "./lib/api";
 import { formatDuration } from "./lib/format";
-import { AppStateView, ManualEntryInput, Project, ProjectInput, Task, TaskInput, TodayEntryView } from "./types/app";
+import { ActiveSession, AppStateView, ManualEntryInput, Project, ProjectInput, Task, TaskInput, TodayEntryView } from "./types/app";
 
 type Route = "home" | "settings" | "manual";
 type SettingsPage = "general" | "focus" | "projects" | "tasks";
@@ -67,8 +67,41 @@ export function App() {
   const resolvedTheme: "light" | "dark" = state
     ? state.theme === "dark" ? "dark" : state.theme === "light" ? "light" : systemTheme
     : systemTheme;
-  // resolvedTheme available for styling — full token application is a future task
-  void resolvedTheme;
+  useEffect(() => {
+    const root = document.documentElement;
+    const t = resolvedTheme === "dark"
+      ? {
+          "--c-bg": "#1c1d22",
+          "--c-surface": "#25262c",
+          "--c-header": "#2a2b31",
+          "--c-footer": "#232428",
+          "--c-accent": "#0a84ff",
+          "--c-fg1": "rgba(255,255,255,0.96)",
+          "--c-fg2": "rgba(255,255,255,0.55)",
+          "--c-fg3": "rgba(255,255,255,0.28)",
+          "--c-sep": "rgba(255,255,255,0.10)",
+          "--c-lip": "#3a3b41",
+          "--c-card": "rgba(255,255,255,0.06)",
+          "--c-card-border": "rgba(255,255,255,0.10)",
+          "--c-gray-fill": "#1a1b20",
+        }
+      : {
+          "--c-bg": "#f0f1f5",
+          "--c-surface": "#f4f5f8",
+          "--c-header": "#d6d7da",
+          "--c-footer": "#cfd1d5",
+          "--c-accent": "#1688f8",
+          "--c-fg1": "#1d1d1f",
+          "--c-fg2": "#6e7076",
+          "--c-fg3": "#9a9ca0",
+          "--c-sep": "rgba(0,0,0,0.10)",
+          "--c-lip": "#aeb1b7",
+          "--c-card": "rgba(255,255,255,0.45)",
+          "--c-card-border": "#ffffff",
+          "--c-gray-fill": "#a7aaaf",
+        };
+    Object.entries(t).forEach(([k, v]) => root.style.setProperty(k, v));
+  }, [resolvedTheme]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 60_000);
@@ -164,7 +197,8 @@ export function App() {
     [refresh],
   );
 
-  const startSelectedTimer = useCallback(async () => {
+  type PomodoroConfig = NonNullable<typeof state>["config"]["pomodoro"];
+  const startSelectedTimer = useCallback(async (pomodoroOverride?: PomodoroConfig) => {
     if (!state) return;
     let project = selectedProject;
     if (!project) {
@@ -181,7 +215,10 @@ export function App() {
       task = await createTask({ project_id: project.id, name: taskName.trim() || "Task name" });
     }
     if (focusMode) {
-      await startFocus(project.id, task.id, state.config);
+      const cfg = pomodoroOverride
+        ? { ...state.config, pomodoro: pomodoroOverride }
+        : state.config;
+      await startFocus(project.id, task.id, cfg);
     } else {
       await startTracking(project.id, task.id);
     }
@@ -236,6 +273,7 @@ export function App() {
                   onStop={() => void run(stopSession)}
                   onPause={() => void run(pauseSession)}
                   onResumeSession={() => void run(resumeSession)}
+                  onSkipFocus={() => void run(skipFocusPhase)}
                   onManualEntry={() => setRoute("manual")}
                 />
                 {newTimerOpen ? (
@@ -251,7 +289,7 @@ export function App() {
                     taskName={taskName}
                     setTaskName={setTaskName}
                     onCancel={() => setNewTimerOpen(false)}
-                    onStart={() => void run(startSelectedTimer, () => setNewTimerOpen(false))}
+                    onStart={(pom) => void run(() => startSelectedTimer(pom), () => setNewTimerOpen(false))}
                   />
                 ) : null}
                 {editingEntry ? (
@@ -334,6 +372,117 @@ function MenuBar({ active, elapsed, now }: { active: boolean; elapsed: number; n
   );
 }
 
+function FocusRing({ progress, elapsed }: { progress: number; elapsed: number }) {
+  const r = 64;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(1, Math.max(0, progress)));
+  return (
+    <View style={styles.focusRingWrap}>
+      <svg width={160} height={160} style={{ transform: "rotate(-90deg)", display: "block" }}>
+        <circle cx={80} cy={80} r={r} stroke="var(--c-sep, rgba(0,0,0,0.10))" strokeWidth={12} fill="none" />
+        <circle
+          cx={80} cy={80} r={r}
+          stroke="var(--c-accent, #1688f8)"
+          strokeWidth={12}
+          fill="none"
+          strokeDasharray={`${circ}`}
+          strokeDashoffset={`${offset}`}
+          strokeLinecap="round"
+        />
+      </svg>
+      <View style={styles.focusRingCenter}>
+        <Text style={styles.focusRingTime}>{formatDuration(elapsed)}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ActiveSessionCard({
+  session,
+  project,
+  task,
+  onPause,
+  onResume,
+  onStop,
+  onSkip,
+}: {
+  session: ActiveSession;
+  project?: Project;
+  task?: Task;
+  onPause: () => void;
+  onResume: () => void;
+  onStop: () => void;
+  onSkip: () => void;
+}) {
+  const paused = Boolean(session.paused_at);
+  const isFocus = session.mode === "focus";
+  const focus = session.focus;
+
+  let phaseProgress = 0;
+  let phaseLabel = "";
+  let roundDots: boolean[] = [];
+  if (focus) {
+    const elapsedPhase = Math.max(0, (Date.now() - new Date(focus.phase_started_at).getTime()) / 1000);
+    phaseProgress = Math.min(1, elapsedPhase / focus.phase_duration_seconds);
+    phaseLabel =
+      focus.phase === "focus" ? "Focus" :
+      focus.phase === "short_break" ? "Short Break" :
+      focus.phase === "long_break" ? "Long Break" : "Complete";
+    roundDots = Array.from({ length: focus.total_rounds }, (_, i) => i < focus.round_index);
+  }
+
+  return (
+    <View style={styles.activeCard}>
+      {isFocus && focus ? (
+        <>
+          <FocusRing progress={phaseProgress} elapsed={session.elapsed_seconds} />
+          <Text style={styles.focusPhaseLabel}>{phaseLabel} · Round {focus.round_index}/{focus.total_rounds}</Text>
+          <View style={styles.focusDots}>
+            {roundDots.map((done, i) => (
+              <View key={i} style={[styles.roundDot, done ? styles.roundDotDone : styles.roundDotPending]} />
+            ))}
+          </View>
+          <View style={styles.activeCardMeta}>
+            <View style={[styles.projectRail, { backgroundColor: project?.color ?? "#1688f8", height: 44 }]} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.projectName}>{project?.name}</Text>
+              <Text style={styles.taskTitle}>{task?.name}</Text>
+            </View>
+          </View>
+          <View style={styles.activeCardButtons}>
+            <Pressable accessibilityRole="button" accessibilityLabel={paused ? "Resume" : "Pause"} onPress={paused ? onResume : onPause} style={styles.rowPlay}>
+              <Text style={styles.playGlyph}>{paused ? "▶" : "‖"}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Skip phase" onPress={onSkip} style={styles.rowPlay}>
+              <Text style={styles.playGlyph}>⏭</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Stop" onPress={onStop} style={[styles.rowPlay, styles.rowStop]}>
+              <Text style={styles.stopGlyph}>■</Text>
+            </Pressable>
+          </View>
+        </>
+      ) : (
+        <View style={styles.trackCardContent}>
+          <View style={[styles.projectRail, { backgroundColor: project?.color ?? "#1688f8", height: 56 }]} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.projectName}>{project?.name}</Text>
+            <Text style={styles.taskTitle}>{task?.name}</Text>
+          </View>
+          <Text style={styles.trackElapsed}>{formatDuration(session.elapsed_seconds)}</Text>
+          <View style={styles.rowButtonGroup}>
+            <Pressable accessibilityRole="button" accessibilityLabel={paused ? "Resume" : "Pause"} onPress={paused ? onResume : onPause} style={[styles.rowPlay, styles.rowStop]}>
+              <Text style={styles.stopGlyph}>{paused ? "▶" : "‖"}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Stop" onPress={onStop} style={[styles.rowPlay, styles.rowStop]}>
+              <Text style={styles.stopGlyph}>■</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
 function MacPopover({
   state,
   now,
@@ -344,6 +493,7 @@ function MacPopover({
   onStop,
   onPause,
   onResumeSession,
+  onSkipFocus,
   onManualEntry,
 }: {
   state: AppStateView;
@@ -355,39 +505,84 @@ function MacPopover({
   onStop: () => void;
   onPause: () => void;
   onResumeSession: () => void;
+  onSkipFocus: () => void;
   onManualEntry: () => void;
 }) {
   const rows = state.today_entries;
-  const activeId = state.active_session?.task_id;
 
   const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const calTitle = `Today, ${now.getDate()} ${monthNames[now.getMonth()]}`;
-
+  const fullDayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const dayAbbrevs = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const todayLabel = dayAbbrevs[now.getDay()];
+  // state.week is ordered Mon–Sun; find today's index in that ordering
+  const monBasedToday = (now.getDay() + 6) % 7;
+  const [selectedWeekIdx, setSelectedWeekIdx] = useState(monBasedToday);
+  const dayOffset = selectedWeekIdx - monBasedToday;
 
+  const selectedDate = new Date(now);
+  selectedDate.setDate(now.getDate() + dayOffset);
+  const calTitle =
+    dayOffset === 0
+      ? `Today, ${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]}`
+      : dayOffset === -1
+        ? `Yesterday, ${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]}`
+        : `${fullDayNames[selectedDate.getDay()]}, ${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]}`;
+
+  const displayRows = dayOffset === 0 ? rows : [];
   const activeProjects = state.projects.filter((p) => !p.archived_at);
+  const activeSession = state.active_session;
+  const activeProject = activeSession ? state.projects.find((p) => p.id === activeSession.project_id) : undefined;
+  const activeTask = activeSession ? state.tasks.find((t) => t.id === activeSession.task_id) : undefined;
+
   return (
     <View style={styles.popover}>
       <View style={styles.popTopLip} />
       <View style={styles.calendarHeader}>
         <Text style={styles.calendarTitle}>{calTitle}</Text>
         <View style={styles.weekNav}>
-          {state.week.map((day) => {
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Previous day"
+            onPress={() => setSelectedWeekIdx((i) => Math.max(0, i - 1))}
+            style={styles.chevronBtn}
+          >
+            <Text style={styles.chevron}>‹</Text>
+          </Pressable>
+          {state.week.map((day, idx) => {
+            const isSelected = idx === selectedWeekIdx;
             const isToday = day.label === todayLabel;
             return (
-              <View key={day.label} style={styles.dayCell}>
-                <View style={isToday ? styles.todayBubble : undefined}>
-                  <Text style={isToday ? styles.todayLetter : styles.dayLetter}>{day.label[0]}</Text>
+              <Pressable key={day.label} accessibilityRole="button" onPress={() => setSelectedWeekIdx(idx)} style={styles.dayCell}>
+                <View style={isSelected ? styles.todayBubble : isToday ? styles.todayRing : undefined}>
+                  <Text style={isSelected ? styles.todayLetter : styles.dayLetter}>{day.label[0]}</Text>
                 </View>
-                <Text style={isToday ? styles.dayValueActive : styles.dayValue}>
+                <Text style={isSelected ? styles.dayValueActive : styles.dayValue}>
                   {day.seconds > 0 ? formatShort(day.seconds) : ""}
                 </Text>
-              </View>
+              </Pressable>
             );
           })}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Next day"
+            onPress={() => setSelectedWeekIdx((i) => Math.min(6, i + 1))}
+            style={styles.chevronBtn}
+          >
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
         </View>
       </View>
+      {activeSession ? (
+        <ActiveSessionCard
+          session={activeSession}
+          project={activeProject}
+          task={activeTask}
+          onPause={onPause}
+          onResume={onResumeSession}
+          onStop={onStop}
+          onSkip={onSkipFocus}
+        />
+      ) : null}
       <ScrollView style={styles.entryList}>
         {activeProjects.length === 0 ? (
           <View style={styles.emptyState}>
@@ -397,7 +592,11 @@ function MacPopover({
               <Text style={styles.emptyStateActionText}>Create a Project</Text>
             </Pressable>
           </View>
-        ) : rows.length === 0 ? (
+        ) : displayRows.length === 0 && dayOffset !== 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No entries for this day</Text>
+          </View>
+        ) : displayRows.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No time logged today</Text>
             <Pressable onPress={onNewTimer} style={styles.emptyStateAction}>
@@ -405,50 +604,25 @@ function MacPopover({
             </Pressable>
           </View>
         ) : (
-          rows.map((item) => {
-            const running = activeId === item.task.id;
-            const paused = running && Boolean(state.active_session?.paused_at);
-            return (
-              <Pressable key={item.entry.id} onPress={() => onEdit(item)} style={styles.entryRow}>
-                <View style={[styles.projectRail, { backgroundColor: item.project.color }]} />
-                <View style={styles.entryText}>
-                  <Text style={styles.projectName}>{item.project.name}</Text>
-                  <Text style={styles.taskTitle}>{item.task.name}</Text>
-                  {item.entry.note ? <Text style={styles.note}>{item.entry.note}</Text> : null}
-                </View>
-                <Text style={styles.rowDuration}>{formatShort(item.entry.duration_seconds)}</Text>
-                {running ? (
-                  <View style={styles.rowButtonGroup}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={paused ? `Resume ${item.task.name}` : `Pause ${item.task.name}`}
-                      onPress={paused ? onResumeSession : onPause}
-                      style={[styles.rowPlay, styles.rowStop]}
-                    >
-                      <Text style={styles.stopGlyph}>{paused ? "▶" : "‖"}</Text>
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Stop ${item.task.name}`}
-                      onPress={onStop}
-                      style={[styles.rowPlay, styles.rowStop]}
-                    >
-                      <Text style={styles.stopGlyph}>■</Text>
-                    </Pressable>
-                  </View>
-                ) : (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Resume ${item.task.name}`}
-                    onPress={() => onResume(item)}
-                    style={styles.rowPlay}
-                  >
-                    <Text style={styles.playGlyph}>▶</Text>
-                  </Pressable>
-                )}
+          displayRows.map((item) => (
+            <Pressable key={item.entry.id} onPress={() => onEdit(item)} style={styles.entryRow}>
+              <View style={[styles.projectRail, { backgroundColor: item.project.color }]} />
+              <View style={styles.entryText}>
+                <Text style={styles.projectName}>{item.project.name}</Text>
+                <Text style={styles.taskTitle}>{item.task.name}</Text>
+                {item.entry.note ? <Text style={styles.note}>{item.entry.note}</Text> : null}
+              </View>
+              <Text style={styles.rowDuration}>{formatShort(item.entry.duration_seconds)}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Resume ${item.task.name}`}
+                onPress={() => onResume(item)}
+                style={styles.rowPlay}
+              >
+                <Text style={styles.playGlyph}>▶</Text>
               </Pressable>
-            );
-          })
+            </Pressable>
+          ))
         )}
         <View style={styles.grayFill} />
       </ScrollView>
@@ -693,8 +867,9 @@ function NewTimerOverlay({
   taskName: string;
   setTaskName: (value: string) => void;
   onCancel: () => void;
-  onStart: () => void;
+  onStart: (pomodoroOverride: typeof state.config.pomodoro) => void;
 }) {
+  const [localPomodoro, setLocalPomodoro] = useState(state.config.pomodoro);
   const activeProjectId = selectedProject?.id ?? selectedProjectId;
   const projectTasks = state.tasks.filter((task) => task.project_id === activeProjectId && !task.archived_at);
   const projectSuggestions = state.projects
@@ -777,12 +952,12 @@ function NewTimerOverlay({
           <Text style={styles.focusSub}>Use Pomodoro timing for this timer</Text>
         </View>
       </Pressable>
-      {focusMode ? <FocusOptions /> : null}
+      {focusMode ? <FocusOptions pomodoro={localPomodoro} setPomodoro={setLocalPomodoro} /> : null}
       <View style={styles.modalActions}>
         <Pressable onPress={onCancel} style={styles.cancelButton}>
           <Text style={styles.cancelText}>Cancel</Text>
         </Pressable>
-        <Pressable onPress={onStart} style={styles.startButton}>
+        <Pressable onPress={() => onStart(localPomodoro)} style={styles.startButton}>
           <Text style={styles.buttonPlay}>▶</Text>
           <Text style={styles.startText}>{focusMode ? "Start Focus" : "Start Timer"}</Text>
         </Pressable>
@@ -791,22 +966,55 @@ function NewTimerOverlay({
   );
 }
 
-function FocusOptions() {
+function FocusOptions({
+  pomodoro,
+  setPomodoro,
+}: {
+  pomodoro: { focus_minutes: number; short_break_minutes: number; long_break_minutes: number; rounds: number; long_break_after_rounds: number };
+  setPomodoro: (p: typeof pomodoro) => void;
+}) {
+  const upd = (key: keyof typeof pomodoro, delta: number) => {
+    setPomodoro({ ...pomodoro, [key]: Math.max(1, pomodoro[key] + delta) });
+  };
   return (
     <>
       <View style={styles.optionGroup}>
-        <Stepper label="Focus" sub="Default from Settings" value="25 min" />
-        <Stepper label="Rounds" sub="Default from Settings" value="4×" />
+        <Stepper
+          label="Focus"
+          sub="Minutes per focus session"
+          value={`${pomodoro.focus_minutes} min`}
+          onMinus={() => upd("focus_minutes", -1)}
+          onPlus={() => upd("focus_minutes", 1)}
+        />
+        <Stepper
+          label="Rounds"
+          sub="Number of focus rounds"
+          value={`${pomodoro.rounds}×`}
+          onMinus={() => upd("rounds", -1)}
+          onPlus={() => upd("rounds", 1)}
+        />
       </View>
       <View style={styles.optionGroup}>
-        <Stepper label="Break time" sub="Length of each break" value="5 min" />
-        <Stepper label="Break every" sub="How often to pause" value="Round" />
+        <Stepper
+          label="Break time"
+          sub="Length of each break"
+          value={`${pomodoro.short_break_minutes} min`}
+          onMinus={() => upd("short_break_minutes", -1)}
+          onPlus={() => upd("short_break_minutes", 1)}
+        />
+        <Stepper
+          label="Break every"
+          sub="Long break after N rounds"
+          value={`${pomodoro.long_break_after_rounds}`}
+          onMinus={() => upd("long_break_after_rounds", -1)}
+          onPlus={() => upd("long_break_after_rounds", 1)}
+        />
       </View>
     </>
   );
 }
 
-function Stepper({ label, sub, value }: { label: string; sub: string; value: string }) {
+function Stepper({ label, sub, value, onMinus, onPlus }: { label: string; sub: string; value: string; onMinus: () => void; onPlus: () => void }) {
   return (
     <View style={styles.stepperRow}>
       <View>
@@ -814,9 +1022,13 @@ function Stepper({ label, sub, value }: { label: string; sub: string; value: str
         <Text style={styles.stepperSub}>{sub}</Text>
       </View>
       <View style={styles.stepper}>
-        <Text style={styles.stepperSymbol}>−</Text>
+        <Pressable accessibilityRole="button" onPress={onMinus}>
+          <Text style={styles.stepperSymbol}>−</Text>
+        </Pressable>
         <Text style={styles.stepperValue}>{value}</Text>
-        <Text style={styles.stepperSymbol}>+</Text>
+        <Pressable accessibilityRole="button" onPress={onPlus}>
+          <Text style={styles.stepperSymbol}>+</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -1412,26 +1624,107 @@ const styles = StyleSheet.create({
     height: 1112,
     borderRadius: 34,
     overflow: "hidden",
-    backgroundColor: "#f0f1f5",
+    backgroundColor: "var(--c-bg, #f0f1f5)",
     boxShadow: "0 20px 60px rgba(0,0,0,0.35)" as unknown as string,
   },
-  popTopLip: { height: 26, backgroundColor: "#aeb1b7" },
+  popTopLip: { height: 26, backgroundColor: "var(--c-lip, #aeb1b7)" },
   calendarHeader: {
     height: 218,
-    backgroundColor: "#d6d7da",
+    backgroundColor: "var(--c-header, #d6d7da)",
     borderBottomWidth: 1,
-    borderBottomColor: "#bfc1c5",
+    borderBottomColor: "var(--c-sep, rgba(0,0,0,0.10))",
     alignItems: "center",
   },
-  calendarTitle: { marginTop: 18, fontSize: 27, fontWeight: "800", color: "#202124" },
+  calendarTitle: { marginTop: 18, fontSize: 27, fontWeight: "800", color: "var(--c-fg1, #202124)" },
   weekNav: {
     flexDirection: "row",
     alignItems: "center",
     gap: 24,
     marginTop: 44,
   },
-  chevron: { fontSize: 54, color: "#97999d", marginHorizontal: 4 },
+  chevronBtn: { width: 44, alignItems: "center", justifyContent: "center" },
+  chevron: { fontSize: 54, color: "#97999d" },
+  todayRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 3,
+    borderColor: "#1688f8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   dayCell: { width: 54, alignItems: "center", gap: 8 },
+  activeCard: {
+    backgroundColor: "var(--c-card, rgba(255,255,255,0.45))",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "var(--c-sep, rgba(0,0,0,0.08))",
+    paddingHorizontal: 36,
+    paddingVertical: 24,
+  },
+  trackCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 22,
+  },
+  trackElapsed: {
+    fontSize: 42,
+    fontWeight: "700",
+    color: "var(--c-fg1, #1d1d1f)",
+    fontVariant: ["tabular-nums"],
+    marginRight: 8,
+  },
+  focusRingWrap: {
+    alignSelf: "center",
+    width: 160,
+    height: 160,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  focusRingCenter: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  focusRingTime: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: "var(--c-fg1, #1d1d1f)",
+    fontVariant: ["tabular-nums"],
+  },
+  focusPhaseLabel: {
+    textAlign: "center",
+    fontSize: 24,
+    color: "var(--c-fg2, #6e7076)",
+    fontWeight: "700",
+    marginBottom: 16,
+  },
+  focusDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  roundDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.12)",
+  },
+  roundDotDone: { backgroundColor: "#1688f8" },
+  roundDotPending: { backgroundColor: "rgba(0,0,0,0.12)" },
+  activeCardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    marginBottom: 16,
+  },
+  activeCardButtons: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 16,
+  },
   dayLetter: { fontSize: 34, fontWeight: "800", color: "#6d6e72" },
   todayBubble: {
     width: 68,
@@ -1444,7 +1737,7 @@ const styles = StyleSheet.create({
   todayLetter: { fontSize: 34, fontWeight: "900", color: "#fff" },
   dayValue: { fontSize: 23, color: "#93959a", fontWeight: "800", minHeight: 28 },
   dayValueActive: { fontSize: 23, color: "#1688f8", fontWeight: "900", minHeight: 28 },
-  entryList: { flex: 1, backgroundColor: "#f4f5f8" },
+  entryList: { flex: 1, backgroundColor: "var(--c-surface, #f4f5f8)" },
   entryRow: {
     minHeight: 158,
     paddingHorizontal: 36,
@@ -1468,13 +1761,13 @@ const styles = StyleSheet.create({
   },
   projectRail: { width: 16, height: 68, borderRadius: 8 },
   entryText: { flex: 1, minWidth: 0 },
-  projectName: { color: "#a2a4a8", fontSize: 23, fontWeight: "800" },
-  taskTitle: { color: "#202126", fontSize: 29, fontWeight: "800", marginTop: 4 },
+  projectName: { color: "var(--c-fg2, #a2a4a8)", fontSize: 23, fontWeight: "800" },
+  taskTitle: { color: "var(--c-fg1, #202126)", fontSize: 29, fontWeight: "800", marginTop: 4 },
   note: { color: "#737579", fontSize: 25, marginTop: 4 },
   rowDuration: {
     width: 104,
     textAlign: "right",
-    color: "#17181d",
+    color: "var(--c-fg1, #17181d)",
     fontSize: 42,
     fontWeight: "500",
     fontVariant: ["tabular-nums"],
@@ -1496,10 +1789,10 @@ const styles = StyleSheet.create({
   rowStop: { borderColor: "#1688f8" },
   playGlyph: { color: "#b7b9bd", fontSize: 28, marginLeft: 4 },
   stopGlyph: { color: "#1688f8", fontSize: 22 },
-  grayFill: { height: 124, backgroundColor: "#a7aaaf" },
+  grayFill: { height: 124, backgroundColor: "var(--c-gray-fill, #a7aaaf)" },
   footer: {
     height: 114,
-    backgroundColor: "#cfd1d5",
+    backgroundColor: "var(--c-footer, #cfd1d5)",
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
