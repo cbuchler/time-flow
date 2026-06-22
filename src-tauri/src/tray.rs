@@ -82,10 +82,18 @@ fn position_under_tray(app: &AppHandle, window: &tauri::WebviewWindow) {
     let Ok(Some(rect)) = tray.rect() else {
         return;
     };
-    // rect is in physical pixels; window outer_size is also physical
+    // tauri::Position and tauri::Size are enums; extract physical pixel values
+    let (tray_x, tray_y) = match rect.position {
+        tauri::Position::Physical(p) => (p.x as f64, p.y as f64),
+        tauri::Position::Logical(p) => (p.x, p.y),
+    };
+    let (tray_w, tray_h) = match rect.size {
+        tauri::Size::Physical(s) => (s.width as f64, s.height as f64),
+        tauri::Size::Logical(s) => (s.width, s.height),
+    };
     let win_w = window.outer_size().map(|s| s.width as f64).unwrap_or(720.0);
-    let x = (rect.position.x + rect.size.width / 2.0 - win_w / 2.0).max(0.0);
-    let y = rect.position.y + rect.size.height;
+    let x = (tray_x + tray_w / 2.0 - win_w / 2.0).max(0.0);
+    let y = tray_y + tray_h;
     let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
         x: x as i32,
         y: y as i32,
