@@ -37,19 +37,23 @@ impl AppState {
 
     pub fn view(&self) -> AppResult<AppStateView> {
         let conn = self.conn.lock();
+        // Lock config once and clone it; parking_lot::Mutex is not reentrant,
+        // so locking it twice in the same expression would deadlock.
+        let config = self.config.lock().clone();
+        let theme = match config.appearance.mode {
+            crate::config::ThemeMode::Light => "light".into(),
+            crate::config::ThemeMode::Dark => "dark".into(),
+            crate::config::ThemeMode::System => "system".into(),
+        };
         Ok(AppStateView {
-            config: self.config.lock().clone(),
+            config,
             projects: db::list_projects(&conn)?,
             tasks: db::list_tasks(&conn)?,
             active_session: session::active_session(&conn)?,
             today_entries: db::list_today_entries(&conn)?,
             week: db::week_totals(&conn)?,
             platform: self.platform.clone(),
-            theme: match self.config.lock().appearance.mode {
-                crate::config::ThemeMode::Light => "light".into(),
-                crate::config::ThemeMode::Dark => "dark".into(),
-                crate::config::ThemeMode::System => "system".into(),
-            },
+            theme,
         })
     }
 }
