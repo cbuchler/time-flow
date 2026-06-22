@@ -8,6 +8,10 @@ import {
   archiveTask,
   getAppState,
   onAppState,
+  pauseSession,
+  resumeSession,
+  skipFocusPhase,
+  createManualEntry,
   recordUserActivity,
   startFocus,
   startTracking,
@@ -18,9 +22,9 @@ import {
   updateTask,
 } from "./lib/api";
 import { formatDuration } from "./lib/format";
-import { AppStateView, Project, ProjectInput, Task, TaskInput, TodayEntryView } from "./types/app";
+import { AppStateView, ManualEntryInput, Project, ProjectInput, Task, TaskInput, TodayEntryView } from "./types/app";
 
-type Route = "home" | "settings";
+type Route = "home" | "settings" | "manual";
 type SettingsPage = "general" | "focus" | "projects" | "tasks";
 type SettingsEditor =
   | { type: "newProject" }
@@ -28,6 +32,20 @@ type SettingsEditor =
   | { type: "newTask" }
   | { type: "editTask"; task: Task }
   | null;
+
+function useSystemTheme(): "light" | "dark" {
+  const [dark, setDark] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return dark ? "dark" : "light";
+}
 
 export function App() {
   const [state, setState] = useState<AppStateView | null>(null);
@@ -41,6 +59,32 @@ export function App() {
   const [projectName, setProjectName] = useState("Acme Website");
   const [taskName, setTaskName] = useState("Build component library");
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => new Date());
+  const [idlePromptSeconds, setIdlePromptSeconds] = useState<number | null>(null);
+  const systemTheme = useSystemTheme();
+  const resolvedTheme: "light" | "dark" = state
+    ? state.theme === "dark" ? "dark" : state.theme === "light" ? "light" : systemTheme
+    : systemTheme;
+  // resolvedTheme available for styling — full token application is a future task
+  void resolvedTheme;
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    const hasTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+    if (hasTauri) {
+      void import("@tauri-apps/api/event").then(({ listen }) => {
+        void listen<number>("session-idle-paused", (event) => {
+          setIdlePromptSeconds(event.payload);
+        }).then((fn) => { unlisten = fn; });
+      });
+    }
+    return () => unlisten?.();
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -175,20 +219,21 @@ export function App() {
         </View>
       ) : (
         <>
-          <MenuBar active={Boolean(state.active_session)} elapsed={state.active_session?.elapsed_seconds ?? 0} />
+          <MenuBar active={Boolean(state.active_session)} elapsed={state.active_session?.elapsed_seconds ?? 0} now={now} />
           <View style={[styles.scaledPopoverWrap, { width: 680 * popoverScale, height: 1112 * popoverScale }]}>
             <View style={scaledSurfaceStyle(popoverScale)}>
               <View style={styles.popoverStage}>
                 <MacPopover
                   state={state}
-                  onNewTimer={() => {
-                    setFocusMode(false);
-                    setNewTimerOpen(true);
-                  }}
+                  now={now}
+                  onNewTimer={() => { setFocusMode(false); setNewTimerOpen(true); }}
                   onSettings={() => setRoute("settings")}
                   onResume={(item) => void run(() => startTracking(item.entry.project_id, item.entry.task_id))}
                   onEdit={setEditingEntry}
                   onStop={() => void run(stopSession)}
+                  onPauseSession={() => void run(pauseSession)}
+                  onResumeSession={() => void run(resumeSession)}
+                  onManualEntry={() => setRoute("manual")}
                 />
                 {newTimerOpen ? (
                   <NewTimerOverlay
@@ -224,6 +269,20 @@ export function App() {
                     }
                   />
                 ) : null}
+                {route === "manual" ? (
+                  <ManualEntryOverlay
+                    state={state}
+                    onCancel={() => setRoute("home")}
+                    onSave={(input) => void run(() => createManualEntry(input), () => setRoute("home"))}
+                  />
+                ) : null}
+                {idlePromptSeconds !== null ? (
+                  <IdlePromptOverlay
+                    idleSeconds={idlePromptSeconds}
+                    onKeep={() => { void run(resumeSession); setIdlePromptSeconds(null); }}
+                    onDiscard={() => { void run(stopSession); setIdlePromptSeconds(null); }}
+                  />
+                ) : null}
               </View>
             </View>
           </View>
@@ -254,17 +313,20 @@ function scaledSurfaceStyle(scale: number): ViewStyle {
   } as unknown as ViewStyle;
 }
 
-function MenuBar({ active, elapsed }: { active: boolean; elapsed: number }) {
+function MenuBar({ active, elapsed, now }: { active: boolean; elapsed: number; now: Date }) {
+  const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const MON_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const dateStr = `${DAY_NAMES[now.getDay()]} ${now.getDate()} ${MON_NAMES[now.getMonth()]}  ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
   return (
     <View style={styles.menuBar}>
       <View style={[styles.trayPill, active && styles.trayPillActive]}>
         <View style={styles.recDot} />
         <Text style={styles.trayIcon}>◷</Text>
-        <Text style={styles.trayTime}>{active ? formatDuration(elapsed) : "1:25:04"}</Text>
+        <Text style={styles.trayTime}>{active ? formatDuration(elapsed) : "--:--"}</Text>
       </View>
       <Text style={styles.menuIcon}>⌁</Text>
       <Text style={styles.menuIcon}>▰</Text>
-      <Text style={styles.menuDate}>Sun 21 Jun&nbsp;&nbsp;21:59</Text>
+      <Text style={styles.menuDate}>{dateStr}</Text>
     </View>
   );
 }
@@ -276,6 +338,10 @@ function MacPopover({
   onResume,
   onEdit,
   onStop,
+  onPauseSession,
+  onResumeSession,
+  onManualEntry,
+  now,
 }: {
   state: AppStateView;
   onNewTimer: () => void;
@@ -283,64 +349,111 @@ function MacPopover({
   onResume: (item: TodayEntryView) => void;
   onEdit: (item: TodayEntryView) => void;
   onStop: () => void;
+  onPauseSession: () => void;
+  onResumeSession: () => void;
+  onManualEntry: () => void;
+  now: Date;
 }) {
   const rows = state.today_entries;
   const activeId = state.active_session?.task_id;
+  const MON_NAMES2 = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const calTitle = `Today, ${now.getDate()} ${MON_NAMES2[now.getMonth()]}`;
+  const DAY_ABBREVS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const todayLabel = DAY_ABBREVS[now.getDay()];
+  const hasProjects = state.projects.some((p) => !p.archived_at);
   return (
     <View style={styles.popover}>
       <View style={styles.popTopLip} />
       <View style={styles.calendarHeader}>
-        <Text style={styles.calendarTitle}>Today, 21 Jun</Text>
+        <Text style={styles.calendarTitle}>{calTitle}</Text>
         <View style={styles.weekNav}>
-          <Text style={styles.chevron}>‹</Text>
-          {[
-            ["M", "1:40"],
-            ["T", ""],
-            ["W", ""],
-            ["T", ""],
-            ["F", "5:17"],
-            ["S", ""],
-            ["S", ""],
-          ].map(([label, value]) => (
-            <View key={`${label}-${value}`} style={styles.dayCell}>
-              <View style={label === "F" ? styles.todayBubble : undefined}>
-                <Text style={label === "F" ? styles.todayLetter : styles.dayLetter}>{label}</Text>
+          {state.week.map((day) => {
+            const isToday = day.label.startsWith(todayLabel.slice(0, 3)) || todayLabel.startsWith(day.label.slice(0, 3));
+            return (
+              <View key={day.label} style={styles.dayCell}>
+                <View style={isToday ? styles.todayBubble : undefined}>
+                  <Text style={isToday ? styles.todayLetter : styles.dayLetter}>{day.label.slice(0, 1)}</Text>
+                </View>
+                <Text style={isToday ? styles.dayValueActive : styles.dayValue}>
+                  {day.seconds > 0 ? formatShort(day.seconds) : ""}
+                </Text>
               </View>
-              <Text style={label === "F" ? styles.dayValueActive : styles.dayValue}>{value}</Text>
-            </View>
-          ))}
-          <Text style={styles.chevron}>›</Text>
+            );
+          })}
         </View>
       </View>
       <ScrollView style={styles.entryList}>
-        {rows.map((item) => {
-          const running = activeId === item.task.id;
-          return (
-            <Pressable key={item.entry.id} onPress={() => onEdit(item)} style={styles.entryRow}>
-              <View style={[styles.projectRail, { backgroundColor: item.project.color }]} />
-              <View style={styles.entryText}>
-                <Text style={styles.projectName}>{item.project.name}</Text>
-                <Text style={styles.taskTitle}>{item.task.name}</Text>
-                {item.entry.note ? <Text style={styles.note}>{item.entry.note}</Text> : null}
-              </View>
-              <Text style={styles.rowDuration}>{formatShort(item.entry.duration_seconds)}</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={running ? `Stop ${item.task.name}` : `Resume ${item.task.name}`}
-                onPress={running ? onStop : () => onResume(item)}
-                style={[styles.rowPlay, running && styles.rowStop]}
-              >
-                <Text style={running ? styles.stopGlyph : styles.playGlyph}>{running ? "■" : "▶"}</Text>
-              </Pressable>
+        {!hasProjects ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Welcome to Time &amp; Flow</Text>
+            <Text style={styles.emptyStateSubtext}>Create a project to start tracking time.</Text>
+            <Pressable accessibilityRole="button" onPress={onSettings} style={styles.emptyStateAction}>
+              <Text style={styles.emptyStateActionText}>Create a Project</Text>
             </Pressable>
-          );
-        })}
-        <View style={styles.grayFill} />
+          </View>
+        ) : rows.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No time logged today</Text>
+            <Pressable accessibilityRole="button" onPress={onNewTimer} style={styles.emptyStateAction}>
+              <Text style={styles.emptyStateActionText}>Start a Timer</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            {rows.map((item) => {
+              const running = activeId === item.task.id;
+              return (
+                <Pressable key={item.entry.id} onPress={() => onEdit(item)} style={styles.entryRow}>
+                  <View style={[styles.projectRail, { backgroundColor: item.project.color }]} />
+                  <View style={styles.entryText}>
+                    <Text style={styles.projectName}>{item.project.name}</Text>
+                    <Text style={styles.taskTitle}>{item.task.name}</Text>
+                    {item.entry.note ? <Text style={styles.note}>{item.entry.note}</Text> : null}
+                  </View>
+                  <Text style={styles.rowDuration}>{formatShort(item.entry.duration_seconds)}</Text>
+                  {running ? (
+                    <View style={{ flexDirection: "row", gap: 4 }}>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={state.active_session?.paused_at ? `Resume ${item.task.name}` : `Pause ${item.task.name}`}
+                        onPress={state.active_session?.paused_at ? onResumeSession : onPauseSession}
+                        style={styles.rowPlay}
+                      >
+                        <Text style={styles.playGlyph}>{state.active_session?.paused_at ? "▶" : "⏸"}</Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Stop ${item.task.name}`}
+                        onPress={onStop}
+                        style={styles.rowStop}
+                      >
+                        <Text style={styles.stopGlyph}>■</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Resume ${item.task.name}`}
+                      onPress={() => onResume(item)}
+                      style={styles.rowPlay}
+                    >
+                      <Text style={styles.playGlyph}>▶</Text>
+                    </Pressable>
+                  )}
+                </Pressable>
+              );
+            })}
+            <View style={styles.grayFill} />
+          </>
+        )}
       </ScrollView>
       <View style={styles.footer}>
         <Pressable accessibilityRole="button" accessibilityLabel="New Timer" onPress={onNewTimer} style={styles.newTimerButton}>
           <Text style={styles.buttonPlay}>▶</Text>
           <Text style={styles.newTimerText}>New Timer</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Manual Entry" onPress={onManualEntry} style={styles.manualButton}>
+          <Text style={styles.manualText}>+ Manual</Text>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={onSettings} style={styles.gearButton}>
           <Text style={styles.gear}>⚙</Text>
@@ -414,6 +527,136 @@ function EntryEditOverlay({
           disabled={durationSeconds <= 0}
         >
           <Text style={styles.startText}>Save</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function ManualEntryOverlay({
+  state,
+  onCancel,
+  onSave,
+}: {
+  state: AppStateView;
+  onCancel: () => void;
+  onSave: (input: ManualEntryInput) => void;
+}) {
+  const activeProjects = state.projects.filter((p) => !p.archived_at);
+  const [projectId, setProjectId] = useState(activeProjects[0]?.id ?? "");
+  const [taskId, setTaskId] = useState("");
+  const [minutes, setMinutes] = useState("30");
+  const [note, setNote] = useState("");
+
+  const projectTasks = state.tasks.filter((t) => t.project_id === projectId && !t.archived_at);
+  const durationSeconds = Math.max(0, (parseInt(minutes, 10) || 0) * 60);
+  const canSave = projectId.length > 0 && taskId.length > 0 && durationSeconds > 0;
+
+  return (
+    <View style={styles.overlay}>
+      <Text style={styles.overlayTitle}>Manual Entry</Text>
+      <Text style={styles.formLabel}>Project</Text>
+      <View style={styles.autocompleteList}>
+        {activeProjects.map((project) => (
+          <Pressable
+            key={project.id}
+            accessibilityRole="button"
+            onPress={() => { setProjectId(project.id); setTaskId(""); }}
+            style={[styles.suggestionRow, projectId === project.id && { backgroundColor: "#1d3557" }]}
+          >
+            <View style={styles.suggestionLine}>
+              <View style={[styles.projectDot, { backgroundColor: project.color }]} />
+              <Text style={styles.suggestionTitle}>{project.name}</Text>
+            </View>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.formLabel}>Task</Text>
+      <View style={styles.autocompleteList}>
+        {projectTasks.length === 0 ? (
+          <Text style={[styles.suggestionTitle, { color: "#9ca3af", padding: 8 }]}>No tasks — select a project first</Text>
+        ) : projectTasks.map((task) => (
+          <Pressable
+            key={task.id}
+            accessibilityRole="button"
+            onPress={() => setTaskId(task.id)}
+            style={[styles.suggestionRow, taskId === task.id && { backgroundColor: "#1d3557" }]}
+          >
+            <Text style={styles.suggestionTitle}>{task.name}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.formLabel}>Duration (minutes)</Text>
+      <View style={styles.selectField}>
+        <TextInput
+          accessibilityLabel="Duration minutes"
+          value={minutes}
+          onChangeText={setMinutes}
+          keyboardType="numeric"
+          style={styles.taskInput}
+        />
+        <Text style={styles.unitText}>min</Text>
+      </View>
+      <Text style={styles.formLabel}>Note (optional)</Text>
+      <View style={[styles.selectField, styles.noteField]}>
+        <TextInput
+          accessibilityLabel="Entry note"
+          value={note}
+          onChangeText={setNote}
+          multiline
+          placeholder="Optional"
+          placeholderTextColor="#999ba0"
+          style={[styles.taskInput, styles.noteInput]}
+        />
+      </View>
+      <View style={styles.modalActions}>
+        <Pressable accessibilityRole="button" onPress={onCancel} style={styles.cancelButton}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => {
+            if (!canSave) return;
+            onSave({
+              project_id: projectId,
+              task_id: taskId,
+              started_at: new Date(Date.now() - durationSeconds * 1000).toISOString(),
+              duration_seconds: durationSeconds,
+              note: note.trim() || null,
+            });
+          }}
+          style={[styles.startButton, !canSave && { opacity: 0.45 }]}
+          disabled={!canSave}
+        >
+          <Text style={styles.startText}>Save Entry</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function IdlePromptOverlay({
+  idleSeconds,
+  onKeep,
+  onDiscard,
+}: {
+  idleSeconds: number;
+  onKeep: () => void;
+  onDiscard: () => void;
+}) {
+  const minutes = Math.round(idleSeconds / 60);
+  return (
+    <View style={[styles.overlay, { justifyContent: "center" }]}>
+      <Text style={styles.overlayTitle}>Mac was idle</Text>
+      <Text style={[styles.editRuleText, { textAlign: "center" as const, marginBottom: 16 }]}>
+        {`Your timer was paused after ${minutes} minute${minutes !== 1 ? "s" : ""} of inactivity. Keep this time or discard it?`}
+      </Text>
+      <View style={styles.modalActions}>
+        <Pressable accessibilityRole="button" onPress={onDiscard} style={styles.deleteButton}>
+          <Text style={styles.deleteText}>Discard Idle Time</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={onKeep} style={styles.startButton}>
+          <Text style={styles.startText}>Keep &amp; Resume</Text>
         </Pressable>
       </View>
     </View>
@@ -1642,4 +1885,11 @@ const styles = StyleSheet.create({
     color: "#76787d",
     fontSize: 28,
   },
+  emptyState: { flex: 1, alignItems: "center" as const, justifyContent: "center", paddingVertical: 48, gap: 12 },
+  emptyStateText: { fontSize: 15, color: "#e5e7eb", fontWeight: "500" as const, textAlign: "center" as const },
+  emptyStateSubtext: { fontSize: 13, color: "#9ca3af", textAlign: "center" as const, paddingHorizontal: 24 },
+  emptyStateAction: { backgroundColor: "#1d4ed8", borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8, marginTop: 4 },
+  emptyStateActionText: { fontSize: 13, color: "#ffffff", fontWeight: "600" as const },
+  manualButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  manualText: { fontSize: 13, color: "#9ca3af" },
 });
