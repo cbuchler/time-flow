@@ -45,7 +45,11 @@ impl AppState {
             today_entries: db::list_today_entries(&conn)?,
             week: db::week_totals(&conn)?,
             platform: self.platform.clone(),
-            theme: "system".into(),
+            theme: match self.config.lock().appearance.mode.as_str() {
+                "light" => "light".into(),
+                "dark" => "dark".into(),
+                _ => "system".into(),
+            },
         })
     }
 }
@@ -68,7 +72,13 @@ fn spawn_timer_loop(app: AppHandle, state: Arc<AppState>) {
         };
         if should_idle_pause {
             let conn = state.conn.lock();
+            let elapsed = session::active_session(&conn)
+                .ok()
+                .flatten()
+                .map(|s| s.elapsed_seconds)
+                .unwrap_or(0);
             let _ = session::pause(&conn, "idle_auto_pause");
+            let _ = app.emit("session-idle-paused", elapsed);
         }
         if tick.is_ok() {
             if let Ok(view) = state.view() {
