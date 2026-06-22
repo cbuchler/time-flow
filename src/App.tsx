@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
+import { listen } from "@tauri-apps/api/event";
 import {
   createManualEntry,
   createProject,
@@ -78,11 +79,9 @@ export function App() {
     let unlisten: (() => void) | undefined;
     const hasTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
     if (hasTauri) {
-      void import("@tauri-apps/api/event").then(({ listen }) => {
-        void listen<number>("session-idle-paused", (event) => {
-          setIdlePromptSeconds(event.payload);
-        }).then((fn) => { unlisten = fn; });
-      });
+      void listen<number>("session-idle-paused", (event) => {
+        setIdlePromptSeconds(event.payload);
+      }).then((fn) => { unlisten = fn; });
     }
     return () => unlisten?.();
   }, []);
@@ -463,134 +462,6 @@ function MacPopover({
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={onSettings} style={styles.gearButton}>
           <Text style={styles.gear}>⚙</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-function ManualEntryOverlay({
-  state,
-  onCancel,
-  onSave,
-}: {
-  state: AppStateView;
-  onCancel: () => void;
-  onSave: (input: ManualEntryInput) => void;
-}) {
-  const activeProjects = state.projects.filter((p) => !p.archived_at);
-  const [projectId, setProjectId] = useState(activeProjects[0]?.id ?? "");
-  const [taskId, setTaskId] = useState("");
-  const [minutes, setMinutes] = useState("30");
-  const [note, setNote] = useState("");
-  const [startedAt] = useState(() => {
-    const d = new Date();
-    d.setMinutes(d.getMinutes() - 30);
-    return d.toISOString().slice(0, 16);
-  });
-
-  const projectTasks = state.tasks.filter((t) => t.project_id === projectId && !t.archived_at);
-  const durationSeconds = Math.max(0, (parseInt(minutes, 10) || 0) * 60);
-  const canSave = projectId.length > 0 && taskId.length > 0 && durationSeconds > 0;
-
-  return (
-    <View style={styles.overlay}>
-      <Text style={styles.overlayTitle}>Manual Entry</Text>
-      <Text style={styles.formLabel}>Project</Text>
-      <View style={styles.selectField}>
-        <View style={[styles.projectDot, { backgroundColor: activeProjects.find(p => p.id === projectId)?.color ?? "#1688f8" }]} />
-        <Text style={[styles.taskInput, { paddingVertical: 4 }]}>
-          {activeProjects.find(p => p.id === projectId)?.name ?? "Select project"}
-        </Text>
-      </View>
-      <View style={styles.autocompleteList}>
-        {activeProjects.map((project) => (
-          <Pressable
-            key={project.id}
-            onPress={() => { setProjectId(project.id); setTaskId(""); }}
-            style={styles.suggestionRow}
-          >
-            <View style={styles.suggestionLine}>
-              <View style={[styles.projectDot, { backgroundColor: project.color }]} />
-              <Text style={styles.suggestionTitle}>{project.name}</Text>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-      <Text style={styles.formLabel}>Task</Text>
-      <View style={styles.autocompleteList}>
-        {projectTasks.map((task) => (
-          <Pressable
-            key={task.id}
-            onPress={() => setTaskId(task.id)}
-            style={[styles.suggestionRow, taskId === task.id && { backgroundColor: "#1d3557" }]}
-          >
-            <Text style={styles.suggestionTitle}>{task.name}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Text style={styles.formLabel}>Duration (minutes)</Text>
-      <View style={styles.selectField}>
-        <TextInput
-          accessibilityLabel="Duration minutes"
-          value={minutes}
-          onChangeText={setMinutes}
-          keyboardType="numeric"
-          style={styles.taskInput}
-        />
-        <Text style={styles.unitText}>min</Text>
-      </View>
-      <Text style={styles.formLabel}>Note (optional)</Text>
-      <View style={[styles.selectField, styles.noteField]}>
-        <TextInput
-          accessibilityLabel="Entry note"
-          value={note}
-          onChangeText={setNote}
-          multiline
-          placeholder="Optional"
-          placeholderTextColor="#999ba0"
-          style={[styles.taskInput, styles.noteInput]}
-        />
-      </View>
-      <View style={styles.modalActions}>
-        <Pressable onPress={onCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Cancel</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => canSave && onSave({ project_id: projectId, task_id: taskId, started_at: new Date(startedAt).toISOString(), duration_seconds: durationSeconds, note: note.trim() || null })}
-          style={[styles.startButton, !canSave && { opacity: 0.45 }]}
-          disabled={!canSave}
-        >
-          <Text style={styles.startText}>Save Entry</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-function IdlePromptOverlay({
-  idleSeconds,
-  onKeep,
-  onDiscard,
-}: {
-  idleSeconds: number;
-  onKeep: () => void;
-  onDiscard: () => void;
-}) {
-  const minutes = Math.round(idleSeconds / 60);
-  return (
-    <View style={[styles.overlay, { justifyContent: "center" }]}>
-      <Text style={styles.overlayTitle}>Mac was idle</Text>
-      <Text style={[styles.editRuleText, { textAlign: "center", marginBottom: 16 }]}>
-        Your timer was paused after {minutes} minute{minutes !== 1 ? "s" : ""} of inactivity.
-        What would you like to do with this time?
-      </Text>
-      <View style={styles.modalActions}>
-        <Pressable onPress={onDiscard} style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Discard Idle Time</Text>
-        </Pressable>
-        <Pressable onPress={onKeep} style={styles.startButton}>
-          <Text style={styles.startText}>Keep & Resume</Text>
         </Pressable>
       </View>
     </View>
@@ -2031,11 +1902,4 @@ const styles = StyleSheet.create({
     color: "#76787d",
     fontSize: 28,
   },
-  emptyState: { flex: 1, alignItems: "center" as const, justifyContent: "center", paddingVertical: 48, gap: 12 },
-  emptyStateText: { fontSize: 15, color: "#e5e7eb", fontWeight: "500" as const, textAlign: "center" as const },
-  emptyStateSubtext: { fontSize: 13, color: "#9ca3af", textAlign: "center" as const, paddingHorizontal: 24 },
-  emptyStateAction: { backgroundColor: "#1d4ed8", borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8, marginTop: 4 },
-  emptyStateActionText: { fontSize: 13, color: "#ffffff", fontWeight: "600" as const },
-  manualButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-  manualText: { fontSize: 13, color: "#9ca3af" },
 });
