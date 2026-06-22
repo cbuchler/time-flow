@@ -68,8 +68,26 @@ fn toggle_popover(app: &AppHandle) {
         if window.is_visible().unwrap_or(false) {
             let _ = window.hide();
         } else {
+            position_under_tray(app, &window);
             let _ = window.show();
             let _ = window.set_focus();
         }
     }
+}
+
+fn position_under_tray(app: &AppHandle, window: &tauri::WebviewWindow) {
+    let Some(tray) = app.tray_by_id("main") else {
+        return;
+    };
+    let Ok(Some(rect)) = tray.rect() else {
+        return;
+    };
+    // rect is in physical pixels; window outer_size is also physical
+    let win_w = window.outer_size().map(|s| s.width as f64).unwrap_or(720.0);
+    let x = (rect.position.x + rect.size.width / 2.0 - win_w / 2.0).max(0.0);
+    let y = rect.position.y + rect.size.height;
+    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+        x: x as i32,
+        y: y as i32,
+    }));
 }

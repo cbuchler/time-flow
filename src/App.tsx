@@ -180,8 +180,8 @@ export function App() {
   }, [selectedProject, state, taskName]);
 
   const viewport = useViewportSize();
-  const popoverScale = Math.min(1, (viewport.width - 48) / 680, (viewport.height - 98) / 1112);
-  const settingsScale = Math.min(1, (viewport.width - 48) / 1364, (viewport.height - 48) / 1214);
+  const popoverScale = Math.min(1, viewport.width / 680, viewport.height / 1112);
+  const settingsScale = Math.min(1, viewport.width / 1364, viewport.height / 1214);
 
   const run = useCallback(
     async (action: () => Promise<unknown>, after?: () => void) => {
@@ -256,7 +256,6 @@ export function App() {
         </View>
       ) : (
         <>
-          <MenuBar active={Boolean(state.active_session)} elapsed={state.active_session?.elapsed_seconds ?? 0} now={now} />
           <View style={[styles.scaledPopoverWrap, { width: 680 * popoverScale, height: 1112 * popoverScale }]}>
             <View style={scaledSurfaceStyle(popoverScale)}>
               <View style={styles.popoverStage}>
@@ -1564,7 +1563,7 @@ function errorMessage(err: unknown): string {
 const styles = StyleSheet.create({
   desktop: {
     minHeight: "100vh" as unknown as number,
-    backgroundColor: "#111219",
+    backgroundColor: "transparent",
     alignItems: "center",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif",
   },
@@ -1579,12 +1578,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   scaledPopoverWrap: {
-    marginTop: 28,
     overflow: "visible",
     alignItems: "center",
   },
   scaledSettingsWrap: {
-    marginTop: 22,
     overflow: "visible",
     alignItems: "center",
   },
@@ -1618,7 +1615,7 @@ const styles = StyleSheet.create({
   trayTime: { fontSize: 26, color: "#1d1d1f", fontWeight: "700", fontVariant: ["tabular-nums"] },
   menuIcon: { fontSize: 26, color: "#1d1d1f", fontWeight: "700" },
   menuDate: { fontSize: 27, color: "#1d1d1f", fontWeight: "700" },
-  popoverStage: { width: 680, marginTop: 28, position: "relative" },
+  popoverStage: { width: 680, position: "relative" },
   popover: {
     width: 680,
     height: 1112,
