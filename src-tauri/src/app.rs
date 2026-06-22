@@ -45,10 +45,10 @@ impl AppState {
             today_entries: db::list_today_entries(&conn)?,
             week: db::week_totals(&conn)?,
             platform: self.platform.clone(),
-            theme: match self.config.lock().appearance.mode.as_str() {
-                "light" => "light".into(),
-                "dark" => "dark".into(),
-                _ => "system".into(),
+            theme: match self.config.lock().appearance.mode {
+                crate::config::ThemeMode::Light => "light".into(),
+                crate::config::ThemeMode::Dark => "dark".into(),
+                crate::config::ThemeMode::System => "system".into(),
             },
         })
     }
