@@ -1,1 +1,1 @@
-{"main":{"identifier":"main","description":"Main popover window permissions for Time & Flow.","local":true,"windows":["main"],"permissions":["core:default","notification:default","autostart:default"]}}
+{"main":{"identifier":"main","description":"Window permissions for the Time & Flow popover and Settings window.","local":true,"windows":["main","settings"],"permissions":["core:default","notification:default","autostart:default"]}}
