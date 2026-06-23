@@ -69,13 +69,13 @@ Use a fixed-footprint navigation stack:
 
 Read these before platform-specific UI or native work:
 
-- macOS: `design/platforms/macos/DESIGN.md`
-- Windows: `design/platforms/windows/DESIGN.md`
-- GNOME: `design/platforms/gnome/DESIGN.md`
-- KDE: `design/platforms/kde/DESIGN.md`
-- Components: `design/components/DESIGN.md`
-- Accessibility: `design/accessibility/DESIGN.md`
-- Empty states: `design/empty-states/DESIGN.md`
+- macOS: `platforms/macos/DESIGN.md`
+- Windows: `platforms/windows/DESIGN.md`
+- GNOME: `platforms/gnome/DESIGN.md`
+- KDE: `platforms/kde/DESIGN.md`
+- Components: `components/DESIGN.md`
+- Accessibility: `accessibility/DESIGN.md`
+- Empty states: `empty-states/DESIGN.md`
 
 ## Agent Rules
 
