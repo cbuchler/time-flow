@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Time &amp; Flow — Native Redesign Mock</title>
+<style>
+  :root{--accent:#007aff;--green:#34c759;--red:#ff3b30;--orange:#ff9f0a;--purple:#bf5af2;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;color:#1d1d1f;
+    background:radial-gradient(1200px 800px at 18% 12%, #b8a6e8 0%, rgba(184,166,232,0) 60%),radial-gradient(1100px 900px at 85% 90%, #6fb1e6 0%, rgba(111,177,230,0) 55%),linear-gradient(135deg,#c9b6ec 0%, #8e9bd8 45%, #6aa6dd 100%);
+    min-height:100%;display:flex;flex-direction:column;align-items:center;padding:24px 16px 80px;
+  }
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;background:rgba(255,255,255,0.55);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border:1px solid rgba(255,255,255,0.6);border-radius:14px;padding:10px 14px;margin-bottom:26px;max-width:880px;box-shadow:0 8px 30px rgba(0,0,0,0.18);}
+  .toolbar .group{display:flex;gap:4px;flex-wrap:wrap;background:rgba(120,120,128,0.16);padding:3px;border-radius:9px;}
+  .seg{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:#3c3c43;padding:5px 11px;border-radius:7px;letter-spacing:-0.01em;}
+  .seg.active{background:#fff;color:#000;box-shadow:0 1px 3px rgba(0,0,0,0.16),0 0 0 0.5px rgba(0,0,0,0.04);}
+  .toolbar .label{font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#3c3c43cc;padding:0 2px;}
+  .caption{color:#ffffffea;font-size:12px;margin-top:18px;text-shadow:0 1px 2px rgba(0,0,0,0.25);text-align:center;max-width:440px;line-height:1.5;}
+  .stage{display:flex;justify-content:center;align-items:flex-start;min-height:600px;}
+  .surface{display:none;} .surface.show{display:block;animation:pop .18s ease;}
+  @keyframes pop{from{opacity:0;transform:translateY(6px) scale(.99);}to{opacity:1;transform:none;}}
+
+  /* ---- column: menubar + popover ---- */
+  .pv-col{display:flex;flex-direction:column;width:340px;}
+
+  /* menu-bar status item */
+  .menubar{height:26px;border-radius:7px;margin-bottom:8px;display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:0 10px;background:rgba(255,255,255,0.5);backdrop-filter:blur(20px);box-shadow:0 0 0 0.5px rgba(0,0,0,0.08),0 4px 14px rgba(0,0,0,0.12);}
+  .mb-sys{color:#3c3c43;opacity:.45;font-size:13px;}
+  .mb-item{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#1d1d1f;padding:3px 8px;border-radius:5px;background:rgba(0,0,0,0.07);font-variant-numeric:tabular-nums;}
+  .mb-item .mdot{width:7px;height:7px;border-radius:50%;background:#86868b;}
+  .mb-item.live .mdot{background:var(--accent);}
+  .mb-item.foc .mdot{background:var(--accent);box-shadow:0 0 0 2px rgba(0,122,255,0.25);}
+  .dark .menubar{background:rgba(40,40,42,0.6);} .dark .mb-sys{color:#fff;opacity:.5;} .dark .mb-item{color:#f5f5f7;background:rgba(255,255,255,0.12);}
+
+  /* popover */
+  .popover{position:relative;width:340px;border-radius:13px;background:rgba(246,246,248,0.82);backdrop-filter:saturate(180%) blur(30px);-webkit-backdrop-filter:saturate(180%) blur(30px);box-shadow:0 1px 0 rgba(255,255,255,0.5) inset,0 18px 50px rgba(0,0,0,0.35),0 0 0 0.5px rgba(0,0,0,0.18);overflow:hidden;color:#1d1d1f;}
+  .popover .arrow{position:absolute;top:-9px;right:30px;width:18px;height:9px;overflow:hidden;}
+  .popover .arrow::after{content:"";position:absolute;top:4px;left:2px;width:14px;height:14px;background:rgba(246,246,248,0.92);transform:rotate(45deg);box-shadow:0 0 0 0.5px rgba(0,0,0,0.12);}
+  .pv-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:0.5px solid rgba(0,0,0,0.12);}
+  .pv-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#86868b;flex:1;}
+  .pv-status .dot{width:8px;height:8px;border-radius:50%;background:#b0b0b5;}
+  .pv-status.live{color:var(--accent);} .pv-status.live .dot{background:var(--accent);box-shadow:0 0 0 3px rgba(0,122,255,0.18);}
+  .pv-title{font-size:13px;font-weight:700;letter-spacing:-0.01em;color:#1d1d1f;} .pv-head .spacer{flex:1;}
+  .pv-body{max-height:480px;overflow-y:auto;}
+  .pv-body::-webkit-scrollbar{width:7px;} .pv-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.22);border-radius:4px;border:2px solid transparent;background-clip:content-box;}
+
+  .sec{display:flex;align-items:baseline;justify-content:space-between;padding:13px 16px 6px;}
+  .sec-l{font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#86868b;}
+  .sec-r{font-size:13px;font-weight:700;color:#1d1d1f;font-variant-numeric:tabular-nums;}
+
+  /* week selector — day + hours, no bars, with week nav */
+  .weeknav{display:flex;align-items:center;gap:2px;padding:0 8px 8px;}
+  .wk-chev{appearance:none;border:0;background:transparent;cursor:pointer;color:#86868b;font-size:17px;width:22px;height:46px;border-radius:6px;flex:none;}
+  .wk-chev:hover{background:rgba(120,120,128,0.14);color:#1d1d1f;}
+  .week{display:flex;justify-content:space-between;gap:3px;flex:1;}
+  .day{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;border-radius:9px;cursor:pointer;}
+  .day .lbl{font-size:11px;font-weight:600;color:#86868b;}
+  .day .val{font-size:13px;font-weight:600;color:#1d1d1f;font-variant-numeric:tabular-nums;}
+  .day .val.empty{color:#c4c4c6;}
+  .day:hover:not(.sel){background:rgba(120,120,128,0.12);}
+  .day.sel{background:var(--accent);} .day.sel .lbl,.day.sel .val{color:#fff;}
+
+  /* project group + indented tasks */
+  .grp{display:flex;align-items:center;gap:8px;padding:10px 16px 4px;}
+  .grp .pdot{width:9px;height:9px;border-radius:50%;flex:none;}
+  .grp .pdot.none{background:transparent;border:1.5px dashed #b0b0b5;}
+  .grp .pname{font-size:13px;font-weight:600;color:#1d1d1f;flex:1;letter-spacing:-0.01em;}
+  .grp .ptot{font-size:13px;font-weight:600;color:#1d1d1f;font-variant-numeric:tabular-nums;}
+  .tasks{margin:0 8px 2px;padding-left:17px;border-left:1.5px solid rgba(120,120,128,0.22);}
+  .row{display:flex;align-items:center;gap:12px;padding:7px 8px 7px 10px;border-radius:8px;}
+  .row .rt{flex:1;min-width:0;} .row .task{font-size:13px;color:#1d1d1f;letter-spacing:-0.01em;} .row .dur{font-size:11px;color:#86868b;margin-top:1px;font-variant-numeric:tabular-nums;}
+  .row .dur.live{color:var(--accent);font-weight:600;} .dark .row .dur.live{color:#0a84ff;}
+  .row:hover{background:rgba(120,120,128,0.12);} .row.active{background:rgba(0,122,255,0.12);}
+  .play{width:30px;height:30px;border-radius:50%;flex:none;cursor:pointer;border:1.5px solid var(--accent);background:transparent;display:flex;align-items:center;justify-content:center;} .play svg{fill:var(--accent);margin-left:2px;}
+  .stop-circ{width:30px;height:30px;border-radius:50%;flex:none;background:var(--red);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;} .stop-circ span{width:9px;height:9px;border-radius:2px;background:#fff;}
+
+  .pv-foot{display:flex;gap:8px;align-items:center;padding:10px 12px;border-top:0.5px solid rgba(0,0,0,0.12);background:rgba(255,255,255,0.25);}
+  .btn{height:30px;border-radius:8px;border:0;cursor:pointer;font:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:-0.01em;}
+  .btn.primary{background:var(--accent);color:#fff;padding:0 14px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,0.18);} .btn.primary svg{fill:#fff;}
+  .btn.secondary{background:rgba(120,120,128,0.16);color:#1d1d1f;padding:0 14px;}
+  .btn.icon{width:30px;background:rgba(120,120,128,0.16);color:#3c3c43;font-size:16px;}
+
+  /* notification (focus behavior) */
+  .notif{width:340px;margin-bottom:10px;background:rgba(250,250,252,0.96);backdrop-filter:blur(20px);border-radius:14px;padding:11px 13px;box-shadow:0 12px 40px rgba(0,0,0,0.26),0 0 0 0.5px rgba(0,0,0,0.1);display:flex;gap:11px;align-items:flex-start;}
+  .notif .ic{width:34px;height:34px;border-radius:8px;background:linear-gradient(160deg,#0a84ff,#0060df);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;}
+  .notif .nt{flex:1;} .notif .n1{font-size:12px;font-weight:700;} .notif .n2{font-size:12px;color:#3c3c43;margin-top:1px;} .notif .nw{font-size:11px;color:#86868b;}
+  .dark .notif{background:rgba(44,44,46,0.96);} .dark .notif .n2{color:#c9c9ce;}
+  .notif-cap{font-size:11px;font-weight:600;color:#ffffffcc;margin-bottom:5px;text-shadow:0 1px 2px rgba(0,0,0,.3);}
+
+  /* New Timer sheet */
+  .sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.14);backdrop-filter:blur(2px);display:flex;align-items:stretch;}
+  .sheet{width:100%;background:rgba(246,246,248,0.98);backdrop-filter:saturate(180%) blur(30px);padding:16px 16px 14px;display:flex;flex-direction:column;}
+  .sheet h3{font-size:14px;font-weight:700;text-align:center;margin-bottom:12px;}
+  .f-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#86868b;margin:10px 2px 5px;}
+  .f-input{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.7);border:0.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:9px 10px;font-size:13px;box-shadow:0 1px 1px rgba(0,0,0,0.03);}
+  .f-input .pdot{width:9px;height:9px;border-radius:50%;} .f-input .val{flex:1;color:#1d1d1f;} .f-input .chev{color:#86868b;font-size:12px;}
+  .check-row{display:flex;align-items:center;gap:10px;margin-top:16px;cursor:pointer;}
+  .chk{width:18px;height:18px;border-radius:5px;border:1.5px solid rgba(0,0,0,0.28);display:flex;align-items:center;justify-content:center;flex:none;}
+  .chk.on{background:var(--accent);border-color:var(--accent);} .chk.on::after{content:"✓";color:#fff;font-size:11px;font-weight:800;}
+  .check-row .ctt{font-size:13px;font-weight:600;} .check-row .cts{font-size:11px;color:#86868b;}
+  .focus-opts{margin-top:12px;background:rgba(255,255,255,0.55);border-radius:10px;padding:4px 12px;box-shadow:0 0 0 0.5px rgba(0,0,0,0.07);}
+  .pstep{display:flex;align-items:center;justify-content:space-between;padding:9px 0;} .pstep + .pstep{border-top:0.5px solid rgba(0,0,0,0.08);}
+  .pstep .pl{font-size:13px;} .pstep .pr{display:flex;align-items:center;gap:10px;} .pstep .pv{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;min-width:52px;text-align:right;}
+  .pm{display:inline-flex;background:rgba(120,120,128,0.18);border-radius:7px;overflow:hidden;} .pm button{appearance:none;border:0;background:transparent;cursor:pointer;font-size:15px;color:#1d1d1f;width:28px;height:24px;} .pm button:first-child{border-right:0.5px solid rgba(0,0,0,0.12);}
+  .sheet-actions{display:flex;gap:10px;margin-top:18px;} .sheet-actions .btn{flex:1;height:34px;}
+
+  /* dark popover */
+  .dark .popover{background:rgba(38,38,42,0.78);color:#f5f5f7;box-shadow:0 1px 0 rgba(255,255,255,0.06) inset,0 18px 50px rgba(0,0,0,0.55),0 0 0 0.5px rgba(0,0,0,0.6);}
+  .dark .popover .arrow::after{background:rgba(46,46,50,0.95);box-shadow:0 0 0 0.5px rgba(255,255,255,0.08);}
+  .dark .pv-head{border-color:rgba(255,255,255,0.1);} .dark .pv-title{color:#f5f5f7;}
+  .dark .pv-status,.dark .sec-l,.dark .row .dur,.dark .day .lbl{color:#98989d;}
+  .dark .sec-r,.dark .grp .pname,.dark .grp .ptot,.dark .row .task,.dark .day .val{color:#f5f5f7;}
+  .dark .day .val.empty{color:#5a5a5e;} .dark .tasks{border-color:rgba(255,255,255,0.16);}
+  .dark .row:hover{background:rgba(255,255,255,0.07);} .dark .row.active{background:rgba(10,132,255,0.22);} .dark .day:hover:not(.sel){background:rgba(255,255,255,0.07);}
+  .dark .pv-foot{border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);}
+  .dark .btn.secondary{background:rgba(120,120,128,0.28);color:#f5f5f7;} .dark .btn.icon{background:rgba(120,120,128,0.28);color:#d0d0d4;}
+  .dark .sheet{background:rgba(40,40,44,0.99);} .dark .f-input{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12);} .dark .f-input .val{color:#f5f5f7;}
+  .dark .check-row .ctt{color:#f5f5f7;} .dark .focus-opts{background:rgba(255,255,255,0.05);} .dark .pstep .pl,.dark .pstep .pv{color:#f5f5f7;} .dark .pstep + .pstep{border-color:rgba(255,255,255,0.08);} .dark .pm{background:rgba(120,120,128,0.32);} .dark .pm button{color:#f5f5f7;}
+
+  /* ===================== SETTINGS ===================== */
+  .win{width:720px;border-radius:11px;overflow:hidden;background:#ececec;color:#1d1d1f;box-shadow:0 30px 80px rgba(0,0,0,0.4),0 0 0 0.5px rgba(0,0,0,0.2);display:flex;flex-direction:column;}
+  .titlebar{height:52px;display:flex;align-items:center;padding:0 16px;gap:8px;background:rgba(246,246,248,0.7);backdrop-filter:blur(20px);border-bottom:0.5px solid rgba(0,0,0,0.1);}
+  .lights{display:flex;gap:8px;} .lights i{width:12px;height:12px;border-radius:50%;display:block;}
+  .lights .r{background:#ff5f57;}.lights .y{background:#febc2e;}.lights .g{background:#28c840;}
+  .titlebar .wt{flex:1;text-align:center;font-size:13px;font-weight:600;margin-right:52px;}
+  .win-body{display:flex;height:452px;}
+  .sidebar{width:200px;background:rgba(255,255,255,0.35);backdrop-filter:blur(20px);border-right:0.5px solid rgba(0,0,0,0.1);padding:10px;}
+  .sb{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;font-size:13px;font-weight:500;color:#1d1d1f;cursor:pointer;}
+  .sb .ic{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;flex:none;}
+  .sb.active{background:var(--accent);color:#fff;} .sb.active .ic{background:rgba(255,255,255,0.25);}
+  .content{flex:1;background:#ececec;overflow-y:auto;padding:22px 26px;}
+  .grp-label{font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#86868b;margin:0 0 8px 4px;}
+  .card{background:#fbfbfd;border-radius:10px;box-shadow:0 0 0 0.5px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);overflow:hidden;margin-bottom:10px;}
+  .cell{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:44px;} .cell + .cell{border-top:0.5px solid rgba(0,0,0,0.08);}
+  .cell .ct{flex:1;} .cell .ctt{font-size:13px;font-weight:500;} .cell .cts{font-size:11px;color:#86868b;margin-top:1px;line-height:1.35;}
+  .cell .cdot{width:11px;height:11px;border-radius:50%;flex:none;} .cell .cdot.none{background:transparent!important;border:1.5px dashed #b0b0b5;}
+  .cell.tappable{cursor:pointer;} .cell.tappable:hover{background:rgba(0,0,0,0.025);}
+  .note{font-size:11px;color:#86868b;line-height:1.45;margin:2px 4px 22px;}
+  .gap{margin-bottom:22px;}
+  .segmented{display:inline-flex;background:rgba(120,120,128,0.16);border-radius:8px;padding:2px;}
+  .segmented button{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;font-size:13px;font-weight:500;color:#1d1d1f;padding:4px 14px;border-radius:6px;}
+  .segmented button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.14),0 0 0 0.5px rgba(0,0,0,0.04);font-weight:600;}
+  .switch{width:38px;height:23px;border-radius:12px;background:rgba(120,120,128,0.3);position:relative;cursor:pointer;transition:background .18s;flex:none;}
+  .switch i{position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left .18s;} .switch.on{background:var(--green);} .switch.on i{left:17px;}
+  .stepper{display:inline-flex;align-items:center;gap:10px;} .stepper .v{font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;min-width:54px;text-align:right;} .stepper .pm button{width:30px;height:26px;}
+  .swatches{display:flex;gap:8px;} .sw{width:22px;height:22px;border-radius:50%;cursor:pointer;box-shadow:0 0 0 0.5px rgba(0,0,0,0.1);} .sw.sel{box-shadow:0 0 0 2px #fbfbfd,0 0 0 4px var(--accent);}
+  .edit-link{color:#c4c4c6;font-size:17px;cursor:pointer;font-weight:600;}
+  .t-input{flex:none;width:240px;text-align:right;border:0;background:transparent;font:inherit;font-size:13px;color:#1d1d1f;outline:none;} .t-input::placeholder{color:#b0b0b5;}
+  .form-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:10px;}
+  .lbtn{height:30px;border-radius:8px;border:0;font:inherit;font-size:13px;font-weight:600;padding:0 16px;cursor:pointer;}
+  .lbtn.cancel{background:rgba(120,120,128,0.16);color:#1d1d1f;} .lbtn.save{background:var(--accent);color:#fff;} .lbtn.archive{background:transparent;color:var(--red);margin-right:auto;padding-left:0;}
+  .crumb{display:flex;align-items:center;gap:8px;margin-bottom:14px;} .crumb .back{color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;}
+  .pickmark{color:var(--accent);font-size:15px;font-weight:700;}
+
+  .dark .win{background:#1c1c1e;color:#f5f5f7;} .dark .titlebar{background:rgba(40,40,42,0.7);border-color:rgba(255,255,255,0.1);}
+  .dark .sidebar{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.08);} .dark .sb{color:#f5f5f7;}
+  .dark .content{background:#1c1c1e;} .dark .card{background:#2c2c2e;box-shadow:0 0 0 0.5px rgba(255,255,255,0.06);}
+  .dark .cell + .cell{border-color:rgba(255,255,255,0.08);} .dark .cell.tappable:hover{background:rgba(255,255,255,0.03);}
+  .dark .cell .cts,.dark .grp-label,.dark .note{color:#98989d;}
+  .dark .segmented{background:rgba(120,120,128,0.32);} .dark .segmented button{color:#f5f5f7;} .dark .segmented button.on{background:#636366;}
+  .dark .stepper .pm{background:rgba(120,120,128,0.32);} .dark .stepper .pm button{color:#f5f5f7;}
+  .dark .t-input{color:#f5f5f7;} .dark .sw.sel{box-shadow:0 0 0 2px #2c2c2e,0 0 0 4px var(--accent);} .dark .lbtn.cancel{background:rgba(120,120,128,0.3);color:#f5f5f7;}
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="label">Popover</span>
+    <div class="group viewgroup">
+      <button class="seg active" data-view="idle">Idle</button>
+      <button class="seg" data-view="tracking">Tracking</button>
+      <button class="seg" data-view="focusing">Focusing</button>
+      <button class="seg" data-view="newtimer">New Timer</button>
+      <button class="seg" data-view="pastday">Past day</button>
+    </div>
+    <span class="label">Settings</span>
+    <div class="group viewgroup">
+      <button class="seg" data-view="set-general">General</button>
+      <button class="seg" data-view="set-projects">Projects</button>
+      <button class="seg" data-view="set-newproject">New Project</button>
+      <button class="seg" data-view="set-tasks">Tasks</button>
+      <button class="seg" data-view="set-newtask">New Task</button>
+    </div>
+    <span class="label">Appearance</span>
+    <div class="group" id="apprGroup"><button class="seg active" data-appr="light">Light</button><button class="seg" data-appr="dark">Dark</button></div>
+  </div>
+
+  <div class="stage" id="stage">
+
+    <!-- IDLE -->
+    <div class="surface show" data-surface="idle">
+      <div class="pv-col">
+        <div class="menubar"><span class="mb-sys">📶</span><span class="mb-sys">🔋</span><span class="mb-item"><span class="mdot"></span>Idle</span></div>
+        <div class="popover">
+          <div class="arrow"></div>
+          <div class="pv-head"><div class="pv-status"><span class="dot"></span>Idle</div><div class="pv-title">Time &amp; Flow</div><div class="spacer"></div></div>
+          <div class="pv-body">
+            <div class="sec"><span class="sec-l wk-label">This Week</span><span class="sec-r wk-total">31h 42m</span></div>
+            <div class="weeknav"><button class="wk-chev" data-d="-1">‹</button><div class="week"></div><button class="wk-chev" data-d="1">›</button></div>
+            <div class="sec"><span class="sec-l">Today</span><span class="sec-r">3:52:30</span></div>
+            <div class="grp"><span class="pdot" style="background:#0a84ff"></span><span class="pname">Acme Website</span><span class="ptot">2:42:30</span></div>
+            <div class="tasks">
+              <div class="row"><div class="rt"><div class="task">Design review</div><div class="dur">1:12:30</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div>
+              <div class="row"><div class="rt"><div class="task">Build component library</div><div class="dur">1:30:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div>
+            </div>
+            <div class="grp"><span class="pdot" style="background:#bf5af2"></span><span class="pname">Mobile App</span><span class="ptot">45:00</span></div>
+            <div class="tasks"><div class="row"><div class="rt"><div class="task">Bug triage</div><div class="dur">45:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div></div>
+            <div class="grp"><span class="pdot none"></span><span class="pname">No Project</span><span class="ptot">25:00</span></div>
+            <div class="tasks"><div class="row"><div class="rt"><div class="task">Email triage <span style="font-size:11px;color:#86868b;font-weight:500">· Global</span></div><div class="dur">25:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div></div>
+          </div>
+          <div class="pv-foot"><button class="btn primary"><svg width="10" height="11" viewBox="0 0 10 11"><path d="M0 0l10 5.5L0 11z"/></svg>New Timer</button><button class="btn icon">⚙</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACKING -->
+    <div class="surface" data-surface="tracking">
+      <div class="pv-col">
+        <div class="menubar"><span class="mb-sys">📶</span><span class="mb-sys">🔋</span><span class="mb-item live"><span class="mdot"></span>1:12:31</span></div>
+        <div class="popover">
+          <div class="arrow"></div>
+          <div class="pv-head"><div class="pv-status live"><span class="dot"></span>Tracking</div><div class="pv-title">Time &amp; Flow</div><div class="spacer"></div></div>
+          <div class="pv-body">
+            <div class="sec"><span class="sec-l wk-label">This Week</span><span class="sec-r wk-total">31h 42m</span></div>
+            <div class="weeknav"><button class="wk-chev" data-d="-1">‹</button><div class="week"></div><button class="wk-chev" data-d="1">›</button></div>
+            <div class="sec"><span class="sec-l">Today</span><span class="sec-r">3:52:31</span></div>
+            <div class="grp"><span class="pdot" style="background:#0a84ff"></span><span class="pname">Acme Website</span><span class="ptot">2:42:30</span></div>
+            <div class="tasks">
+              <div class="row active"><div class="rt"><div class="task">Design review</div><div class="dur live">running · 1:12:31</div></div><button class="stop-circ" title="Stop"><span></span></button></div>
+              <div class="row"><div class="rt"><div class="task">Build component library</div><div class="dur">1:30:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div>
+            </div>
+            <div class="grp"><span class="pdot" style="background:#bf5af2"></span><span class="pname">Mobile App</span><span class="ptot">45:00</span></div>
+            <div class="tasks"><div class="row"><div class="rt"><div class="task">Bug triage</div><div class="dur">45:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div></div>
+          </div>
+          <div class="pv-foot"><button class="btn primary"><svg width="10" height="11" viewBox="0 0 10 11"><path d="M0 0l10 5.5L0 11z"/></svg>New Timer</button><button class="btn icon">⚙</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOCUSING — looks like tracking; behaves differently (notifications) -->
+    <div class="surface" data-surface="focusing">
+      <div class="pv-col">
+        <div class="notif-cap">Example push notification (focus rounds &amp; breaks):</div>
+        <div class="notif"><div class="ic">⏱️</div><div class="nt"><div class="n1">Time &amp; Flow</div><div class="n2">Focus round complete — take a 5-minute break.</div></div><div class="nw">now</div></div>
+        <div class="menubar"><span class="mb-sys">📶</span><span class="mb-sys">🔋</span><span class="mb-item foc"><span class="mdot"></span>Focus 18:35</span></div>
+        <div class="popover">
+          <div class="arrow"></div>
+          <div class="pv-head"><div class="pv-status live"><span class="dot"></span>Focusing · Round 2 of 4</div><div class="pv-title">Time &amp; Flow</div><div class="spacer"></div></div>
+          <div class="pv-body">
+            <div class="sec"><span class="sec-l wk-label">This Week</span><span class="sec-r wk-total">31h 42m</span></div>
+            <div class="weeknav"><button class="wk-chev" data-d="-1">‹</button><div class="week"></div><button class="wk-chev" data-d="1">›</button></div>
+            <div class="sec"><span class="sec-l">Today</span><span class="sec-r">3:52:31</span></div>
+            <div class="grp"><span class="pdot" style="background:#0a84ff"></span><span class="pname">Acme Website</span><span class="ptot">2:42:30</span></div>
+            <div class="tasks">
+              <div class="row active"><div class="rt"><div class="task">Design review</div><div class="dur live">focusing · 18:35 left</div></div><button class="stop-circ" title="Stop"><span></span></button></div>
+              <div class="row"><div class="rt"><div class="task">Build component library</div><div class="dur">1:30:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div>
+            </div>
+          </div>
+          <div class="pv-foot"><button class="btn primary"><svg width="10" height="11" viewBox="0 0 10 11"><path d="M0 0l10 5.5L0 11z"/></svg>New Timer</button><button class="btn icon">⚙</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW TIMER -->
+    <div class="surface" data-surface="newtimer">
+      <div class="pv-col">
+        <div class="menubar"><span class="mb-sys">📶</span><span class="mb-sys">🔋</span><span class="mb-item"><span class="mdot"></span>Idle</span></div>
+        <div class="popover">
+          <div class="arrow"></div>
+          <div class="pv-head"><div class="pv-status"><span class="dot"></span>Idle</div><div class="pv-title">Time &amp; Flow</div><div class="spacer"></div></div>
+          <div class="pv-body" style="min-height:478px">
+            <div class="sheet-backdrop"><div class="sheet">
+              <h3>New Timer</h3>
+              <div class="f-label">Project</div>
+              <div class="f-input"><span class="pdot" style="background:#0a84ff"></span><span class="val">Acme Website</span><span class="chev">⌄</span></div>
+              <div class="f-label">Task</div>
+              <div class="f-input"><span class="val">Design review</span><span class="chev">⌄</span></div>
+              <div class="check-row" id="focusToggle"><span class="chk on" id="focusChk"></span><div><div class="ctt">Focus Session</div><div class="cts">Use Pomodoro timing &amp; round/break reminders</div></div></div>
+              <div class="focus-opts" id="focusOpts">
+                <div class="pstep"><span class="pl">Focus length</span><span class="pr"><span class="pv">25 min</span><span class="pm"><button>−</button><button>+</button></span></span></div>
+                <div class="pstep"><span class="pl">Short break</span><span class="pr"><span class="pv">5 min</span><span class="pm"><button>−</button><button>+</button></span></span></div>
+                <div class="pstep"><span class="pl">Long break</span><span class="pr"><span class="pv">15 min</span><span class="pm"><button>−</button><button>+</button></span></span></div>
+                <div class="pstep"><span class="pl">Rounds</span><span class="pr"><span class="pv">4</span><span class="pm"><button>−</button><button>+</button></span></span></div>
+              </div>
+              <div class="sheet-actions"><button class="btn secondary" style="flex:1">Cancel</button><button class="btn primary" id="startBtn"><svg width="10" height="11" viewBox="0 0 10 11"><path d="M0 0l10 5.5L0 11z"/></svg><span id="startLbl">Start Focus</span></button></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAST DAY -->
+    <div class="surface" data-surface="pastday">
+      <div class="pv-col">
+        <div class="menubar"><span class="mb-sys">📶</span><span class="mb-sys">🔋</span><span class="mb-item"><span class="mdot"></span>Idle</span></div>
+        <div class="popover">
+          <div class="arrow"></div>
+          <div class="pv-head"><div class="pv-status"><span class="dot"></span>Idle</div><div class="pv-title">Time &amp; Flow</div><div class="spacer"></div></div>
+          <div class="pv-body">
+            <div class="sec"><span class="sec-l wk-label">This Week</span><span class="sec-r wk-total">31h 42m</span></div>
+            <div class="weeknav"><button class="wk-chev" data-d="-1">‹</button><div class="week" data-sel="3"></div><button class="wk-chev" data-d="1">›</button></div>
+            <div class="sec"><span class="sec-l">Thu 18 Jun</span><span class="sec-r">8:18:00</span></div>
+            <div class="grp"><span class="pdot" style="background:#0a84ff"></span><span class="pname">Acme Website</span><span class="ptot">6:30:00</span></div>
+            <div class="tasks">
+              <div class="row"><div class="rt"><div class="task">Design review</div><div class="dur">3:00:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div>
+              <div class="row"><div class="rt"><div class="task">Build component library</div><div class="dur">3:30:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div>
+            </div>
+            <div class="grp"><span class="pdot" style="background:#ff9f0a"></span><span class="pname">Brand Refresh</span><span class="ptot">1:48:00</span></div>
+            <div class="tasks"><div class="row"><div class="rt"><div class="task">Web design</div><div class="dur">1:48:00</div></div><button class="play"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M0 0l11 6-11 6z"/></svg></button></div></div>
+          </div>
+          <div class="pv-foot"><button class="btn primary"><svg width="10" height="11" viewBox="0 0 10 11"><path d="M0 0l10 5.5L0 11z"/></svg>New Timer</button><button class="btn icon" title="Add manual entry for this day">＋</button><button class="btn icon">⚙</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS · GENERAL -->
+    <div class="surface" data-surface="set-general">
+      <div class="win">
+        <div class="titlebar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="wt">General</div></div>
+        <div class="win-body">
+          <div class="sidebar">
+            <div class="sb active"><span class="ic" style="background:#8e8e93">◷</span>General</div>
+            <div class="sb"><span class="ic" style="background:#ff3b30">◉</span>Focus</div>
+            <div class="sb"><span class="ic" style="background:#34c759">▦</span>Projects</div>
+            <div class="sb"><span class="ic" style="background:#0a84ff">☰</span>Tasks</div>
+          </div>
+          <div class="content">
+            <div class="grp-label">Appearance</div>
+            <div class="card gap"><div class="cell"><div class="ct"><div class="ctt">Theme</div><div class="cts">Match the system or pick a fixed appearance.</div></div><div class="segmented"><button>System</button><button class="on">Light</button><button>Dark</button></div></div></div>
+
+            <div class="grp-label">Idle detection</div>
+            <div class="card">
+              <div class="cell"><div class="ct"><div class="ctt">Pause when idle</div><div class="cts">Pause the running timer after a period with no input.</div></div><div class="switch on"><i></i></div></div>
+              <div class="cell"><div class="ct"><div class="ctt">Idle threshold</div><div class="cts">Minutes of inactivity before pausing.</div></div><div class="stepper"><span class="v">10 min</span><span class="pm"><button>−</button><button>+</button></span></div></div>
+            </div>
+            <div class="note">Idle is measured from system-wide keyboard and mouse activity. After the threshold passes with no input, the timer pauses and you're asked whether to keep or discard the idle time.</div>
+
+            <div class="grp-label">Breaks</div>
+            <div class="card gap"><div class="cell"><div class="ct"><div class="ctt">Pomodoro break time</div><div class="cts">Count breaks inside the focus task's total, or as their own entries.</div></div><div class="segmented"><button class="on">Within task</button><button>Separate</button></div></div></div>
+
+            <div class="grp-label">Startup</div>
+            <div class="card"><div class="cell"><div class="ct"><div class="ctt">Launch at login</div><div class="cts">Start Time &amp; Flow automatically.</div></div><div class="switch"><i></i></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS · PROJECTS LIST -->
+    <div class="surface" data-surface="set-projects">
+      <div class="win">
+        <div class="titlebar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="wt">Projects</div></div>
+        <div class="win-body">
+          <div class="sidebar">
+            <div class="sb"><span class="ic" style="background:#8e8e93">◷</span>General</div>
+            <div class="sb"><span class="ic" style="background:#ff3b30">◉</span>Focus</div>
+            <div class="sb active"><span class="ic" style="background:#34c759">▦</span>Projects</div>
+            <div class="sb"><span class="ic" style="background:#0a84ff">☰</span>Tasks</div>
+          </div>
+          <div class="content">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="grp-label" style="margin:0 0 0 4px">Projects · 4 total</div><button class="lbtn save" style="height:26px;font-size:12px;padding:0 12px" data-jump="set-newproject">+ New Project</button></div>
+            <div class="card">
+              <div class="cell tappable" data-jump="set-newproject"><span class="cdot" style="background:#0a84ff"></span><div class="ct"><div class="ctt">Acme Website</div><div class="cts">3 tasks</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newproject"><span class="cdot" style="background:#8e8e93"></span><div class="ct"><div class="ctt">Internal</div><div class="cts">2 tasks</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newproject"><span class="cdot" style="background:#bf5af2"></span><div class="ct"><div class="ctt">Mobile App</div><div class="cts">1 task</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newproject"><span class="cdot" style="background:#ff9f0a"></span><div class="ct"><div class="ctt">Brand Refresh</div><div class="cts">2 tasks</div></div><span class="edit-link">›</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS · NEW PROJECT (name + color only) -->
+    <div class="surface" data-surface="set-newproject">
+      <div class="win">
+        <div class="titlebar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="wt">New Project</div></div>
+        <div class="win-body">
+          <div class="sidebar">
+            <div class="sb"><span class="ic" style="background:#8e8e93">◷</span>General</div>
+            <div class="sb"><span class="ic" style="background:#ff3b30">◉</span>Focus</div>
+            <div class="sb active"><span class="ic" style="background:#34c759">▦</span>Projects</div>
+            <div class="sb"><span class="ic" style="background:#0a84ff">☰</span>Tasks</div>
+          </div>
+          <div class="content">
+            <div class="crumb"><span class="back" data-jump="set-projects">‹ Projects</span></div>
+            <div class="grp-label">New Project</div>
+            <div class="card gap">
+              <div class="cell"><div class="ct"><div class="ctt">Name</div></div><input class="t-input" placeholder="Acme Website" value="Acme Website"></div>
+              <div class="cell"><div class="ct"><div class="ctt">Color</div><div class="cts">Used in lists and timer rows.</div></div><div class="swatches"><span class="sw sel" style="background:#0a84ff"></span><span class="sw" style="background:#8e8e93"></span><span class="sw" style="background:#bf5af2"></span><span class="sw" style="background:#ff9f0a"></span><span class="sw" style="background:#34c759"></span><span class="sw" style="background:#ff3b30"></span></div></div>
+            </div>
+            <div class="form-actions"><button class="lbtn cancel" data-jump="set-projects">Cancel</button><button class="lbtn save">Create Project</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS · TASKS LIST -->
+    <div class="surface" data-surface="set-tasks">
+      <div class="win">
+        <div class="titlebar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="wt">Tasks</div></div>
+        <div class="win-body">
+          <div class="sidebar">
+            <div class="sb"><span class="ic" style="background:#8e8e93">◷</span>General</div>
+            <div class="sb"><span class="ic" style="background:#ff3b30">◉</span>Focus</div>
+            <div class="sb"><span class="ic" style="background:#34c759">▦</span>Projects</div>
+            <div class="sb active"><span class="ic" style="background:#0a84ff">☰</span>Tasks</div>
+          </div>
+          <div class="content">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="grp-label" style="margin:0 0 0 4px">Tasks · 6 total</div><button class="lbtn save" style="height:26px;font-size:12px;padding:0 12px" data-jump="set-newtask">+ New Task</button></div>
+            <div class="card">
+              <div class="cell tappable" data-jump="set-newtask"><span class="cdot" style="background:#0a84ff"></span><div class="ct"><div class="ctt">Design review</div><div class="cts">Acme Website</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newtask"><span class="cdot" style="background:#0a84ff"></span><div class="ct"><div class="ctt">Build component library</div><div class="cts">Acme Website</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newtask"><span class="cdot" style="background:#bf5af2"></span><div class="ct"><div class="ctt">Bug triage</div><div class="cts">Mobile App</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newtask"><span class="cdot none"></span><div class="ct"><div class="ctt">Email triage</div><div class="cts">Global · no project</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newtask"><span class="cdot none"></span><div class="ct"><div class="ctt">Admin &amp; planning</div><div class="cts">Global · no project</div></div><span class="edit-link">›</span></div>
+              <div class="cell tappable" data-jump="set-newtask"><span class="cdot" style="background:#ff9f0a"></span><div class="ct"><div class="ctt">Web design</div><div class="cts">Brand Refresh</div></div><span class="edit-link">›</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS · NEW TASK (with global option) -->
+    <div class="surface" data-surface="set-newtask">
+      <div class="win">
+        <div class="titlebar"><div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="wt">New Task</div></div>
+        <div class="win-body">
+          <div class="sidebar">
+            <div class="sb"><span class="ic" style="background:#8e8e93">◷</span>General</div>
+            <div class="sb"><span class="ic" style="background:#ff3b30">◉</span>Focus</div>
+            <div class="sb"><span class="ic" style="background:#34c759">▦</span>Projects</div>
+            <div class="sb active"><span class="ic" style="background:#0a84ff">☰</span>Tasks</div>
+          </div>
+          <div class="content">
+            <div class="crumb"><span class="back" data-jump="set-tasks">‹ Tasks</span></div>
+            <div class="grp-label">New Task</div>
+            <div class="card gap"><div class="cell"><div class="ct"><div class="ctt">Name</div></div><input class="t-input" placeholder="Build component library" value="Build component library"></div></div>
+            <div class="grp-label">Project</div>
+            <div class="card gap">
+              <div class="cell tappable pick"><span class="cdot none"></span><div class="ct"><div class="ctt">No project <span style="color:#86868b;font-weight:400">(global task)</span></div></div><span class="pickmark">✓</span></div>
+              <div class="cell tappable pick"><span class="cdot" style="background:#0a84ff"></span><div class="ct"><div class="ctt">Acme Website</div></div><span class="pickmark" style="visibility:hidden">✓</span></div>
+              <div class="cell tappable pick"><span class="cdot" style="background:#8e8e93"></span><div class="ct"><div class="ctt">Internal</div></div><span class="pickmark" style="visibility:hidden">✓</span></div>
+              <div class="cell tappable pick"><span class="cdot" style="background:#bf5af2"></span><div class="ct"><div class="ctt">Mobile App</div></div><span class="pickmark" style="visibility:hidden">✓</span></div>
+            </div>
+            <div class="form-actions"><button class="lbtn cancel" data-jump="set-tasks">Cancel</button><button class="lbtn save">Create Task</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="caption">Native point sizes · no scaling · SF Pro · system accent · light + dark. Focus looks like Tracking — the difference is push notifications. Use the toggles to walk every state.</div>
+
+<script>
+  const weeks=[
+    {label:"This Week",  total:"31h 42m", days:[["M","6.2"],["T","7.4"],["W","5.1"],["T","8.3"],["F","3.9"],["S","0.8"],["S",""]]},
+    {label:"Last Week",  total:"38h 05m", days:[["M","7.5"],["T","8.0"],["W","6.6"],["T","7.9"],["F","8.1"],["S",""],["S",""]]},
+    {label:"2 Weeks Ago",total:"29h 12m", days:[["M","5.0"],["T","6.2"],["W","4.8"],["T","7.1"],["F","6.1"],["S",""],["S",""]]}
+  ];
+  function renderWeek(el){
+    const wi=parseInt(el.dataset.wi??"0",10), sel=parseInt(el.dataset.sel??"4",10), w=weeks[wi];
+    el.innerHTML=w.days.map((d,i)=>`<div class="day${i===sel?' sel':''}"><span class="lbl">${d[0]}</span><span class="val${d[1]?'':' empty'}">${d[1]||"–"}</span></div>`).join("");
+    const sec=el.closest(".pv-body"); if(sec){const lab=sec.querySelector(".wk-label"),tot=sec.querySelector(".wk-total"); if(lab)lab.textContent=w.label; if(tot)tot.textContent=w.total;}
+  }
+  document.querySelectorAll(".week").forEach(el=>{el.dataset.wi="0";renderWeek(el);});
+
+  function showView(v){
+    document.querySelectorAll(".viewgroup .seg").forEach(s=>s.classList.toggle("active",s.dataset.view===v));
+    document.querySelectorAll(".surface").forEach(s=>s.classList.toggle("show",s.dataset.surface===v));
+    if(v==="focusing") setAppr("dark");
+  }
+  function setAppr(mode){document.body.classList.toggle("dark",mode==="dark");document.querySelectorAll("#apprGroup .seg").forEach(s=>s.classList.toggle("active",s.dataset.appr===mode));}
+  document.querySelectorAll(".viewgroup").forEach(g=>g.addEventListener("click",e=>{const b=e.target.closest(".seg");if(b)showView(b.dataset.view);}));
+  document.getElementById("apprGroup").addEventListener("click",e=>{const b=e.target.closest(".seg");if(b)setAppr(b.dataset.appr);});
+
+  document.addEventListener("click",e=>{
+    const chev=e.target.closest(".wk-chev");
+    if(chev){const el=chev.closest(".weeknav").querySelector(".week");let wi=parseInt(el.dataset.wi,10)+(chev.dataset.d==="1"?-1:1);wi=Math.max(0,Math.min(weeks.length-1,wi));el.dataset.wi=wi;renderWeek(el);return;}
+    const jump=e.target.closest("[data-jump]"); if(jump){showView(jump.dataset.jump);return;}
+    const sw=e.target.closest(".switch"); if(sw) sw.classList.toggle("on");
+    const seg=e.target.closest(".segmented button"); if(seg){seg.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===seg));}
+    const sel=e.target.closest(".swatches .sw"); if(sel){sel.parentElement.querySelectorAll(".sw").forEach(x=>x.classList.toggle("sel",x===sel));}
+    const pick=e.target.closest(".pick"); if(pick){pick.parentElement.querySelectorAll(".pick .pickmark").forEach(m=>m.style.visibility="hidden");pick.querySelector(".pickmark").style.visibility="visible";}
+    const ft=e.target.closest("#focusToggle"); if(ft){const on=document.getElementById("focusChk").classList.toggle("on");document.getElementById("focusOpts").style.display=on?"block":"none";document.getElementById("startLbl").textContent=on?"Start Focus":"Start Timer";}
+  });
+</script>
+</body>
+</html>
