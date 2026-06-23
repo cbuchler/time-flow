@@ -16,9 +16,9 @@ const hasTauriBridge = typeof window !== "undefined" && "__TAURI_INTERNALS__" in
 
 const preview = createPreviewBackend();
 
-export function getAppState(): Promise<AppStateView> {
-  if (!hasTauriBridge) return preview.getAppState();
-  return invoke("get_app_state");
+export function getAppState(selectedDate?: string): Promise<AppStateView> {
+  if (!hasTauriBridge) return preview.getAppState(selectedDate);
+  return invoke("get_app_state", { selectedDate });
 }
 
 export function onAppState(callback: (state: AppStateView) => void): Promise<() => void> {
@@ -101,13 +101,15 @@ export function createManualEntry(input: ManualEntryInput): Promise<TimeEntry> {
   return invoke("create_manual_entry", { input });
 }
 
-export function updateEntryDurationNote(
+export function updateEntry(
   entryId: string,
+  projectId: string,
+  taskId: string,
   durationSeconds: number,
   note: string | null,
 ): Promise<TimeEntry> {
-  if (!hasTauriBridge) return preview.updateEntryDurationNote(entryId, durationSeconds, note);
-  return invoke("update_entry_duration_note", { entryId, durationSeconds, note });
+  if (!hasTauriBridge) return preview.updateEntry(entryId, projectId, taskId, durationSeconds, note);
+  return invoke("update_entry", { entryId, projectId, taskId, durationSeconds, note });
 }
 
 export function deleteTimeEntry(entryId: string): Promise<TimeEntry> {
@@ -120,9 +122,25 @@ export function updateConfig(patch: Partial<AppConfig>): Promise<AppConfig> {
   return invoke("update_config", { patch });
 }
 
+export function setDatabaseLocation(): Promise<string> {
+  if (!hasTauriBridge) return preview.setDatabaseLocation();
+  return invoke("set_database_location");
+}
+
 export function recordUserActivity(): Promise<void> {
   if (!hasTauriBridge) return Promise.resolve();
   return invoke("record_user_activity");
+}
+
+export function openSettings(): Promise<void> {
+  if (!hasTauriBridge) {
+    // Browser preview: open Settings in a second tab.
+    if (typeof window !== "undefined") {
+      window.open(`${window.location.pathname}?window=settings`, "_blank", "noopener");
+    }
+    return Promise.resolve();
+  }
+  return invoke("open_settings");
 }
 
 function createPreviewBackend() {
@@ -184,7 +202,8 @@ function createPreviewBackend() {
     { id: "task_presentations", project_id: "project_internal", name: "Presentations", archived_at: null },
     { id: "task_docs", project_id: "project_docs", name: "Documentation pass", archived_at: null },
   ];
-  const today = new Date("2026-06-21T12:00:00.000Z");
+  const todayKey = isoDate(new Date());
+  const sampleDay = new Date(`${todayKey}T12:00:00.000Z`);
   const entry = (idValue: string, projectId: string, taskId: string, seconds: number, note: string | null = null): TodayEntryView => {
     const project = projects.find((candidate) => candidate.id === projectId)!;
     const task = tasks.find((candidate) => candidate.id === taskId)!;
@@ -195,8 +214,8 @@ function createPreviewBackend() {
         id: idValue,
         project_id: projectId,
         task_id: taskId,
-        started_at: today.toISOString(),
-        ended_at: new Date(today.getTime() + seconds * 1000).toISOString(),
+        started_at: sampleDay.toISOString(),
+        ended_at: new Date(sampleDay.getTime() + seconds * 1000).toISOString(),
         duration_seconds: seconds,
         note,
         source: "timer",
@@ -231,6 +250,8 @@ function createPreviewBackend() {
       elapsed_seconds: 5104,
       focus: null,
     },
+    selected_date: todayKey,
+    today_date: todayKey,
     today_entries: [
       entry("entry_bug", "project_mobile", "task_bug", 45 * 60),
       entry("entry_components", "project_acme", "task_components", 90 * 60, "Polish shared controls"),
@@ -238,13 +259,13 @@ function createPreviewBackend() {
       entry("entry_standup", "project_internal", "task_standup", 25 * 60),
     ],
     week: [
-      { label: "Mon", seconds: 6000 },
-      { label: "Tue", seconds: 0 },
-      { label: "Wed", seconds: 0 },
-      { label: "Thu", seconds: 0 },
-      { label: "Fri", seconds: 19020 },
-      { label: "Sat", seconds: 0 },
-      { label: "Sun", seconds: 0 },
+      { label: "Mon", date: todayKey, seconds: 6000 },
+      { label: "Tue", date: todayKey, seconds: 0 },
+      { label: "Wed", date: todayKey, seconds: 0 },
+      { label: "Thu", date: todayKey, seconds: 0 },
+      { label: "Fri", date: todayKey, seconds: 19020 },
+      { label: "Sat", date: todayKey, seconds: 0 },
+      { label: "Sun", date: todayKey, seconds: 0 },
     ],
     platform: navigator.platform.toLowerCase().includes("win")
       ? "windows"
@@ -252,6 +273,7 @@ function createPreviewBackend() {
         ? "linux"
         : "macos",
     theme: "system",
+    database_path: "~/Library/Application Support/Time and Flow/timeflow.db",
   };
   const listeners = new Set<(next: AppStateView) => void>();
 
@@ -260,8 +282,26 @@ function createPreviewBackend() {
     listeners.forEach((listener) => listener(next));
   };
 
-  const touchWeek = (seconds: number) => {
-    const index = Math.min(6, Math.max(0, new Date().getDay() - 1));
+  const entriesFor = (dateKey: string) =>
+    state.today_entries.filter((item) => isoDate(new Date(item.entry.started_at)) === dateKey);
+
+  const stateForDate = (dateKey = todayKey): AppStateView => {
+    const week = weekDays(dateKey).map((date, index) => ({
+      label: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index],
+      date,
+      seconds: entriesFor(date).reduce((sum, item) => sum + item.entry.duration_seconds, 0),
+    }));
+    return {
+      ...state,
+      selected_date: dateKey,
+      today_date: todayKey,
+      today_entries: entriesFor(dateKey),
+      week,
+    };
+  };
+
+  const touchWeek = (seconds: number, startedAt = new Date()) => {
+    const index = Math.min(6, Math.max(0, startedAt.getDay() - 1));
     state.week[index] = {
       ...state.week[index],
       seconds: state.week[index].seconds + seconds,
@@ -303,8 +343,8 @@ function createPreviewBackend() {
   }, 1000);
 
   return {
-    async getAppState() {
-      return clone(state);
+    async getAppState(selectedDate?: string) {
+      return clone(stateForDate(selectedDate));
     },
     async listen(callback: (next: AppStateView) => void) {
       listeners.add(callback);
@@ -463,32 +503,40 @@ function createPreviewBackend() {
       const task = state.tasks.find((candidate) => candidate.id === input.task_id);
       if (!project || !task) throw new Error("Project and task are required");
       const started = new Date(input.started_at);
+      const ended = new Date(started.getTime() + input.duration_seconds * 1000);
+      if (started > new Date() || ended > new Date()) throw new Error("manual entries cannot be future-dated");
       const entry: TimeEntry = {
         id: id("entry"),
         project_id: input.project_id,
         task_id: input.task_id,
         started_at: started.toISOString(),
-        ended_at: new Date(started.getTime() + input.duration_seconds * 1000).toISOString(),
+        ended_at: ended.toISOString(),
         duration_seconds: input.duration_seconds,
         note: input.note ?? null,
         source: "manual",
       };
       state.today_entries = [{ entry, project, task }, ...state.today_entries];
-      touchWeek(input.duration_seconds);
+      touchWeek(input.duration_seconds, started);
       emit();
       return entry;
     },
-    async updateEntryDurationNote(entryId: string, durationSeconds: number, note: string | null) {
+    async updateEntry(entryId: string, projectId: string, taskId: string, durationSeconds: number, note: string | null) {
+      const project = state.projects.find((p) => p.id === projectId);
+      const task = state.tasks.find((t) => t.id === taskId);
+      if (!project || !task) throw new Error("Project and task are required");
+      if (task.project_id !== project.id) throw new Error("task does not belong to the selected project");
       let updated: TimeEntry | null = null;
       state.today_entries = state.today_entries.map((item) => {
         if (item.entry.id !== entryId) return item;
         updated = {
           ...item.entry,
+          project_id: projectId,
+          task_id: taskId,
           duration_seconds: durationSeconds,
           ended_at: new Date(new Date(item.entry.started_at).getTime() + durationSeconds * 1000).toISOString(),
           note,
         };
-        return { ...item, entry: updated };
+        return { entry: updated, project, task };
       });
       if (!updated) throw new Error("Entry not found");
       emit();
@@ -500,6 +548,10 @@ function createPreviewBackend() {
       state.today_entries = state.today_entries.filter((candidate) => candidate.entry.id !== entryId);
       emit();
       return item.entry;
+    },
+    async setDatabaseLocation() {
+      // No real filesystem in the browser preview; report the current path.
+      return state.database_path;
     },
     async updateConfig(patch: Partial<AppConfig>) {
       state.config = {
@@ -520,6 +572,23 @@ function id(prefix: string): string {
 
 function elapsed(startedAt: string): number {
   return Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
+}
+
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function addDays(dateKey: string, days: number): string {
+  const date = new Date(`${dateKey}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return isoDate(date);
+}
+
+function weekDays(dateKey: string): string[] {
+  const date = new Date(`${dateKey}T00:00:00.000Z`);
+  const mondayOffset = (date.getUTCDay() + 6) % 7;
+  const monday = addDays(dateKey, -mondayOffset);
+  return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
 }
 
 function clone<T>(value: T): T {

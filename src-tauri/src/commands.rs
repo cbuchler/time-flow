@@ -6,13 +6,25 @@ use crate::{
     models::*,
     session,
 };
-use chrono::Utc;
+use chrono::{NaiveDate, Utc};
 use std::sync::Arc;
-use tauri::State;
+use tauri::{AppHandle, Emitter, State};
+use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
-pub fn get_app_state(state: State<'_, Arc<AppState>>) -> CommandResult<AppStateView> {
-    state.view().map_err(CommandError::from)
+pub fn get_app_state(
+    state: State<'_, Arc<AppState>>,
+    selected_date: Option<String>,
+) -> CommandResult<AppStateView> {
+    let date = selected_date
+        .map(|value| {
+            NaiveDate::parse_from_str(&value, "%Y-%m-%d")
+                .map_err(|_| crate::error::AppError::Validation("invalid selected date".into()))
+        })
+        .transpose()
+        .map_err(CommandError::from)?
+        .unwrap_or_else(|| Utc::now().date_naive());
+    state.view_for_date(date).map_err(CommandError::from)
 }
 
 #[tauri::command]
@@ -134,13 +146,15 @@ pub fn create_manual_entry(
 }
 
 #[tauri::command]
-pub fn update_entry_duration_note(
+pub fn update_entry(
     state: State<'_, Arc<AppState>>,
     entry_id: String,
+    project_id: String,
+    task_id: String,
     duration_seconds: i64,
     note: Option<String>,
 ) -> CommandResult<TimeEntry> {
-    db::update_entry_duration_note(&state.conn.lock(), &entry_id, duration_seconds, note)
+    db::update_entry(&state.conn.lock(), &entry_id, &project_id, &task_id, duration_seconds, note)
         .map_err(CommandError::from)
 }
 
@@ -156,4 +170,54 @@ pub fn delete_time_entry(
 pub fn record_user_activity(state: State<'_, Arc<AppState>>) -> CommandResult<()> {
     *state.last_user_activity.lock() = Utc::now();
     Ok(())
+}
+
+/// Open a native folder picker and relocate the database into the chosen folder
+/// (as `timeflow.db`), migrating the current data over. Returns the path now in
+/// use; if the user cancels the picker, returns the unchanged current path.
+///
+/// `(async)` forces this onto a worker thread. A plain sync command runs on the
+/// main thread, where `blocking_pick_folder` would deadlock: it dispatches the
+/// native panel to the main thread's event loop and blocks the caller until it
+/// returns — fatal if the caller *is* the main thread.
+#[tauri::command(async)]
+pub fn set_database_location(
+    app: AppHandle,
+    state: State<'_, Arc<AppState>>,
+) -> CommandResult<String> {
+    // Safe here: this runs off the main thread, so the blocking call parks this
+    // worker while the panel is serviced normally on the main thread.
+    let picked = app.dialog().file().blocking_pick_folder();
+    let folder = match picked.and_then(|f| f.into_path().ok()) {
+        Some(dir) => dir,
+        None => {
+            // Cancelled — report the current location, no change made.
+            return Ok(state.db_path.lock().to_string_lossy().to_string());
+        }
+    };
+    let new_path = folder.join("timeflow.db");
+
+    let final_path = state
+        .change_database(&new_path)
+        .map_err(CommandError::from)?;
+
+    // Persist the new location so it survives a relaunch.
+    {
+        let mut cfg = state.config.lock();
+        cfg.general.database_path = Some(final_path.to_string_lossy().to_string());
+        config::save_config(&state.paths, &cfg).map_err(CommandError::from)?;
+    }
+
+    // Push refreshed state so every open window reflects the new path immediately.
+    if let Ok(view) = state.view() {
+        let _ = app.emit("app-state", view);
+    }
+    Ok(final_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn open_settings(app: AppHandle) -> CommandResult<()> {
+    crate::menu::open_settings(&app)
+        .map_err(crate::error::AppError::from)
+        .map_err(CommandError::from)
 }

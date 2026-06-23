@@ -21,6 +21,12 @@ pub struct GeneralConfig {
     pub launch_at_login: bool,
     pub idle_auto_pause_enabled: bool,
     pub idle_threshold_minutes: u32,
+    /// Absolute path to the SQLite database file. `None` means the default
+    /// per-platform location (see `resolve_paths`). Set when the user relocates
+    /// their data from Settings. `#[serde(default)]` keeps older config.toml
+    /// files (written before this field existed) parseable.
+    #[serde(default)]
+    pub database_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,6 +86,7 @@ impl Default for AppConfig {
                 launch_at_login: false,
                 idle_auto_pause_enabled: true,
                 idle_threshold_minutes: 10,
+                database_path: None,
             },
             appearance: AppearanceConfig {
                 mode: ThemeMode::System,
@@ -193,6 +200,20 @@ fn platform_dirs(base_dirs: &BaseDirs) -> (PathBuf, PathBuf) {
         base_dirs.config_dir().join("time-and-flow"),
         base_dirs.data_dir().join("time-and-flow"),
     )
+}
+
+/// The database file actually opened at startup: the user's configured override
+/// when its parent directory still exists, otherwise the default location. The
+/// parent-exists guard means a deleted/unmounted custom folder degrades to the
+/// default rather than crashing on launch.
+pub fn effective_db_path(paths: &AppPaths, config: &AppConfig) -> PathBuf {
+    config
+        .general
+        .database_path
+        .as_ref()
+        .map(PathBuf::from)
+        .filter(|p| p.parent().map(|dir| dir.exists()).unwrap_or(false))
+        .unwrap_or_else(|| paths.db_file.clone())
 }
 
 pub fn load_or_create_config(paths: &AppPaths) -> AppResult<AppConfig> {

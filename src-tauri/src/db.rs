@@ -2,7 +2,7 @@ use crate::{
     error::{AppError, AppResult},
     models::*,
 };
-use chrono::{DateTime, Datelike, Duration, NaiveTime, Utc};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveTime, Utc};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 use std::path::Path;
@@ -266,6 +266,12 @@ pub fn create_manual_entry(conn: &Connection, input: ManualEntryInput) -> AppRes
         ));
     }
     let ended_at = input.started_at + Duration::seconds(input.duration_seconds);
+    let now = Utc::now();
+    if input.started_at > now || ended_at > now {
+        return Err(AppError::Validation(
+            "manual entries cannot be future-dated".into(),
+        ));
+    }
     let entry = insert_time_entry(
         conn,
         &input.project_id,
@@ -336,9 +342,11 @@ pub fn insert_time_entry(
     Ok(entry)
 }
 
-pub fn update_entry_duration_note(
+pub fn update_entry(
     conn: &Connection,
     id: &str,
+    project_id: &str,
+    task_id: &str,
     duration_seconds: i64,
     note: Option<String>,
 ) -> AppResult<TimeEntry> {
@@ -347,11 +355,27 @@ pub fn update_entry_duration_note(
             "duration must be greater than zero".into(),
         ));
     }
+    // The entry may be reassigned to a different project/task; guard that the
+    // task actually belongs to the chosen project so we never write a mismatch.
+    let task_project: String = conn
+        .query_row(
+            "SELECT project_id FROM tasks WHERE id=?1",
+            params![task_id],
+            |row| row.get(0),
+        )
+        .map_err(|_| AppError::NotFound(format!("task {task_id}")))?;
+    if task_project != project_id {
+        return Err(AppError::Validation(
+            "task does not belong to the selected project".into(),
+        ));
+    }
     let before = get_time_entry(conn, id)?;
     let ended_at = before.started_at + Duration::seconds(duration_seconds);
     conn.execute(
-        "UPDATE time_entries SET duration_seconds=?1, ended_at=?2, note=?3, updated_at=?4 WHERE id=?5",
+        "UPDATE time_entries SET project_id=?1, task_id=?2, duration_seconds=?3, ended_at=?4, note=?5, updated_at=?6 WHERE id=?7",
         params![
+            project_id,
+            task_id,
             duration_seconds,
             ended_at.to_rfc3339(),
             clean_opt(note),
@@ -360,14 +384,7 @@ pub fn update_entry_duration_note(
         ],
     )?;
     let after = get_time_entry(conn, id)?;
-    audit(
-        conn,
-        "time_entry",
-        id,
-        "update_duration_note",
-        Some(&before),
-        Some(&after),
-    )?;
+    audit(conn, "time_entry", id, "update", Some(&before), Some(&after))?;
     Ok(after)
 }
 
@@ -399,9 +416,8 @@ pub fn list_tasks(conn: &Connection) -> AppResult<Vec<Task>> {
     rows_tasks(&mut stmt, [])
 }
 
-pub fn list_today_entries(conn: &Connection) -> AppResult<Vec<TodayEntryView>> {
-    let today = Utc::now().date_naive();
-    let start = today.and_time(NaiveTime::MIN).and_utc();
+pub fn list_entries_for_date(conn: &Connection, date: NaiveDate) -> AppResult<Vec<TodayEntryView>> {
+    let start = date.and_time(NaiveTime::MIN).and_utc();
     let end = start + Duration::days(1);
     let mut stmt = conn.prepare(
         "SELECT e.id, e.project_id, e.task_id, e.started_at, e.ended_at, e.duration_seconds, e.note, e.source,
@@ -445,9 +461,9 @@ pub fn list_today_entries(conn: &Connection) -> AppResult<Vec<TodayEntryView>> {
     rows.collect::<Result<Vec<_>, _>>().map_err(AppError::from)
 }
 
-pub fn week_totals(conn: &Connection) -> AppResult<Vec<WeekDayTotal>> {
-    let today = Utc::now().date_naive();
-    let monday = today - Duration::days(today.weekday().num_days_from_monday() as i64);
+pub fn week_totals(conn: &Connection, selected_date: NaiveDate) -> AppResult<Vec<WeekDayTotal>> {
+    let monday =
+        selected_date - Duration::days(selected_date.weekday().num_days_from_monday() as i64);
     let mut days = Vec::with_capacity(7);
     for offset in 0..7 {
         let day = monday + Duration::days(offset);
@@ -460,6 +476,7 @@ pub fn week_totals(conn: &Connection) -> AppResult<Vec<WeekDayTotal>> {
         )?;
         days.push(WeekDayTotal {
             label: day.format("%a").to_string(),
+            date: day,
             seconds,
         });
     }

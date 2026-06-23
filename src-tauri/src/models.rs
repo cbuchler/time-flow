@@ -1,5 +1,5 @@
 use crate::config::AppConfig;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,6 +99,7 @@ pub enum FocusPhase {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeekDayTotal {
     pub label: String,
+    pub date: NaiveDate,
     pub seconds: i64,
 }
 
@@ -115,10 +116,13 @@ pub struct AppStateView {
     pub projects: Vec<Project>,
     pub tasks: Vec<Task>,
     pub active_session: Option<ActiveSession>,
+    pub selected_date: NaiveDate,
+    pub today_date: NaiveDate,
     pub today_entries: Vec<TodayEntryView>,
     pub week: Vec<WeekDayTotal>,
     pub platform: String,
     pub theme: String,
+    pub database_path: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

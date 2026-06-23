@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main",
-  "description": "Main popover window permissions for Time & Flow.",
-  "windows": ["main"],
+  "description": "Window permissions for the Time & Flow popover and Settings window.",
+  "windows": ["main", "settings"],
   "permissions": [
     "core:default",
     "notification:default",

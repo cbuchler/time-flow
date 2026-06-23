@@ -7,6 +7,7 @@ export interface AppConfig {
     launch_at_login: boolean;
     idle_auto_pause_enabled: boolean;
     idle_threshold_minutes: number;
+    database_path?: string | null;
   };
   appearance: {
     mode: ThemeMode;
@@ -76,6 +77,7 @@ export interface TodayEntryView {
 
 export interface WeekDayTotal {
   label: string;
+  date: string;
   seconds: number;
 }
 
@@ -84,10 +86,13 @@ export interface AppStateView {
   projects: Project[];
   tasks: Task[];
   active_session?: ActiveSession | null;
+  selected_date: string;
+  today_date: string;
   today_entries: TodayEntryView[];
   week: WeekDayTotal[];
   platform: string;
   theme: string;
+  database_path: string;
 }
 
 export interface ProjectInput {
